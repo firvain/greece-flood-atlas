@@ -1183,8 +1183,12 @@
     const bottomGap = innerHeight - Math.min(tl ? tl.top : innerHeight, info && isPhone() ? info.top : innerHeight);
     if (isPhone()) return { top: (top ? top.bottom : 0) + 10, bottom: bottomGap + 10, left: 20, right: 20 };
     const legend = $('#legend-box').open ? $('#legend-box').getBoundingClientRect() : null;
-    const right = info ? innerWidth - info.left + 20 : legend ? innerWidth - legend.left + 10 : 70;
-    return { top: 40, bottom: bottomGap + 20, left: (top ? top.right : 0) + 20, right };
+    let left = (top ? top.right : 0) + 20;
+    let right = info ? innerWidth - info.left + 20 : legend ? innerWidth - legend.left + 10 : 70;
+    // mid-size screens: cards on both sides leave no room — let the map run under a card rather than not zoom
+    if (innerWidth - left - right < 260) right = 70;
+    if (innerWidth - left - right < 260) left = 20;
+    return { top: 40, bottom: bottomGap + 20, left, right };
   }
 
   // ---------- helpers ----------
