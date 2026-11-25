@@ -240,9 +240,18 @@ def main() -> int:
             print(f"  event {r['id']}: no resolvable region, skipped")
             continue
         union = unary_union(geoms)
-        pt = union.centroid
-        if not union.contains(pt):
-            pt = union.representative_point()
+        # Where to draw the flood: HANZE lists the main affected area first. If the affected areas form
+        # separate land masses (e.g. Athens + "Piraeus & Islands", or West Attica + Dodecanese), use the land mass
+        # that contains the first-listed area; a plain centroid of everything can land in the sea.
+        parts = list(union.geoms) if union.geom_type == "MultiPolygon" else [union]
+        if len(parts) > 1:
+            first = geoms[0]
+            body = max(parts, key=lambda g: g.intersection(first).area)
+        else:
+            body = parts[0]
+        pt = body.centroid
+        if not body.contains(pt):
+            pt = body.representative_point()
         pt_wgs = gpd.GeoSeries([pt], crs=METRIC_CRS).to_crs(4326).iloc[0]
 
         region_names = [labels.region_name(c, name_lookup.get(c)) for c in codes]

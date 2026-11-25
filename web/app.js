@@ -337,6 +337,7 @@
     $('#hl-floods').textContent = nf.format(state.events.length);
     $('#hl-since').textContent = state.years[0];
     document.body.classList.add('ready');
+    if (!coarse) document.querySelectorAll('.sub span').forEach((el) => { el.textContent = el.textContent.replace('Tap one', 'Click one'); });
     addLayers();
     buildUI();
     // controls may have been used while the data was loading: start from what they show now
@@ -460,7 +461,13 @@
       map.on('mouseenter', id, () => (map.getCanvas().style.cursor = 'pointer'));
       map.on('mouseleave', id, () => (map.getCanvas().style.cursor = ''));
     }
+    let tapTimer = null;
+    map.on('dblclick', () => { clearTimeout(tapTimer); tapTimer = null; });
     map.on('click', (e) => {
+      if (coarse) { clearTimeout(tapTimer); tapTimer = setTimeout(() => handleClick(e), 260); return; }
+      handleClick(e);
+    });
+    function handleClick(e) {
       const z = map.getZoom();
       // some layers fade to opacity 0 instead of hiding; MapLibre still returns them, so skip the invisible ones
       const invisible = (id) => (id === 'event-cols' && z >= 8.2) || (id === 'events' && state.is3d && z < 7.9);
@@ -493,7 +500,7 @@
       if (area?.layer.id === 'ems-ext-fill') return popupExtent(area.properties); // areas: no ring
       if (area) return popupRegion(area.properties.region_id);
       closePopup(); // clicked empty map: clear the selection
-    });
+    }
     // desktop hover: name, year and deaths of a flood without clicking
     const tip = $('#tip');
     for (const id of ['events', 'event-cols']) {
@@ -554,7 +561,8 @@
       const byName = state.filtered.filter((f) => norm(f.properties.name).includes(state.f.q));
       const pick = state.filtered.length === 1 ? state.filtered[0] : byName.length === 1 ? byName[0] : null;
       if (pick && state.f.q) selectEvent(pick.properties.id, { fly: true });
-      else { flyToResults(); if (state.f.q) openDrawer(true); }
+      else { flyToResults(); if (state.f.q && !isPhone()) openDrawer(true); }
+      if (isPhone()) e.target.blur(); // put the keyboard away so the map is visible
     });
     $('#fs-clear').addEventListener('click', () => { clearFilters(); goHome(); });
     $('#btn-home').addEventListener('click', () => goHome());
@@ -697,8 +705,9 @@
     const f = state.f;
     const localIds = f.fatal > 0 ? [] : state.local.filter((x) => {
       const p = x.properties;
-      return (p.year == null || (p.year >= f.ymin && p.year <= f.ymax)) && (!f.q || p._search.includes(f.q));
+      return p.year == null || (p.year >= f.ymin && p.year <= f.ymax);
     }).map((x) => x.properties.id);
+    const localMatches = f.q ? state.local.filter((x) => x.properties._search.includes(f.q) && passesLocalYears(x.properties)).length : localIds.length;
     state.localShown = localIds.length;
     for (const id of ['local-pts']) map.getLayer(id) && map.setFilter(id, ['in', ['get', 'id'], ['literal', localIds]]);
     const lc = document.querySelector('#local-count');
@@ -711,7 +720,10 @@
     $('#filter-status').hidden = !active;
     if (active) {
       const parts = [`${plural(state.filtered.length, 'major flood')} (${plural(fatal, 'death')})`];
-      if (state.local.length && f.fatal === 0) parts.push(plural(localIds.length, 'village report'));
+      if (state.local.length && f.fatal === 0) {
+        const inRange = f.ymax >= 2012 && f.ymin <= 2018;
+        parts.push(inRange ? plural(localMatches, 'village report') : 'no village reports (they cover 2012–2018)');
+      }
       $('#fs-text').textContent = `Showing ${parts.join(' · ')}${state.f.ymin !== state.years[0] || state.f.ymax !== state.years[1] ? `, ${state.f.ymin}–${state.f.ymax}` : ''}`;
     }
     $('#timeline').classList.toggle('years-filtered', state.f.ymin !== state.years[0] || state.f.ymax !== state.years[1]);
@@ -752,12 +764,17 @@
 
   // move the map to what the search found (major floods + village reports)
   function flyToResults() {
-    if (!state.f.q || state.f.q.length < 3) return;
-    const pts = state.filtered.map((f) => f.geometry.coordinates);
-    for (const f of state.local) if (f.properties._search.includes(state.f.q) && passesLocalYears(f.properties)) pts.push(f.geometry.coordinates);
+    const q = state.f.q;
+    if (!q || q.length < 3) return;
+    // a town/village whose name matches (e.g. "Volos") → zoom right to it, where village dots are visible
+    const places = state.local.filter((f) => norm(f.properties.place + ' ' + f.properties.place_en).includes(q)).map((f) => f.geometry.coordinates);
+    const pts = places.length && places.length <= 40 ? places : state.filtered.map((f) => f.geometry.coordinates);
     if (!pts.length || pts.length > 80) return;
     const bb = [[Math.min(...pts.map((c) => c[0])), Math.min(...pts.map((c) => c[1]))], [Math.max(...pts.map((c) => c[0])), Math.max(...pts.map((c) => c[1]))]];
-    map.fitBounds(bb, { padding: mapPadding(), maxZoom: 10.5, duration: 900, pitch: state.is3d ? 50 : 0 });
+    const cam = map.cameraForBounds(bb, { padding: mapPadding() });
+    if (!cam) return;
+    const zoom = places.length ? Math.max(Math.min(cam.zoom, 11), 9.5) : Math.min(cam.zoom, 10.5);
+    map.easeTo({ center: cam.center, zoom, pitch: state.is3d ? 50 : 0, duration: 900 });
   }
   const passesLocalYears = (p) => p.year == null || (p.year >= state.f.ymin && p.year <= state.f.ymax);
   // "Start here" buttons: each tells one part of the story
@@ -767,9 +784,9 @@
     if (name === 'daniel') {
       const ev = state.events.find((f) => f.properties.storm === 'Storm Daniel');
       if (!ev) return;
-      selectEvent(ev.properties.id, { fly: true });
       const a = relatedEms(ev.properties).find((x) => !isFollowUp(x));
-      if (a) loadExtent(a.code, false).then(() => syncEmsButtons());
+      selectEvent(ev.properties.id, { fly: !a });
+      if (a) loadExtent(a.code, true).then(() => syncEmsButtons()); // zooms to what the satellite saw
     } else if (name === 'deadliest') {
       state.sort = 'fatal'; $('#sort').value = 'fatal'; renderList();
       if (!isPhone()) openDrawer(true);
@@ -821,14 +838,18 @@
   // the map's stacking context and would sit under the floating cards. A small pin marks the clicked spot.
   const pinEl = document.createElement('div'); pinEl.className = 'pin';
   const pin = new maplibregl.Marker({ element: pinEl });
-  let infoOpener = null;
+  let infoOpener = null, legendWasOpen = false;
   // lngLat = the point to ring (a flood or village report); null for areas, which get no ring
   function openPopup(lngLat, html) {
     const info = $('#info');
     if (info.hidden) infoOpener = document.activeElement;
     clearCardExtents();
+    highlight(null); // selectEvent re-highlights its own flood right after
     info.innerHTML = `<button class="icon-btn info-close" type="button" aria-label="Close details">×</button>${html}`;
     info.hidden = false; info.scrollTop = 0;
+    document.body.classList.add('info-open');
+    // the legend sits where the card opens on desktop: fold it while reading, restore afterwards
+    if (!isPhone() && $('#legend-box').open) { $('#legend-box').open = false; legendWasOpen = true; }
     openLayers(false);
     if (isPhone()) openDrawer(false);
     orbit.stop();
@@ -838,6 +859,8 @@
     pin.remove(); highlight(null); clearCardExtents();
     const info = $('#info'); if (info.hidden) return;
     info.hidden = true;
+    document.body.classList.remove('info-open');
+    if (legendWasOpen) { $('#legend-box').open = true; legendWasOpen = false; }
     if (infoOpener && document.contains(infoOpener)) infoOpener.focus?.();
   }
   // satellite areas shown from a details card belong to that card (unless "all satellite maps" is switched on)
@@ -897,6 +920,7 @@
     const harm = [p.fatalities ? `killed ${plural(p.fatalities, 'person').replace('persons', 'people')}` : 'killed no one on record',
       p.persons_affected ? `affected ${nf.format(p.persons_affected)} ${p.persons_affected === 1 ? 'person' : 'people'}` : null].filter(Boolean);
     const rain = cause(p.cause);
+    p._rainInSummary = !!(rain && /mm/.test(rain));
     return `${what} on ${fmtRange(p)} that ${harm.join(' and ')}.${rain && /mm/.test(rain) ? ` ${rain}.` : ''}`;
   }
   // "Heavy rainfall up to 754 mm in 21 h" -> "Up to 754 mm of rain fell in 21 hours"
@@ -906,14 +930,23 @@
     if (m) return `Up to ${m[1]} mm of rain fell in ${m[2]} ${m[3].toLowerCase() === 'h' ? (m[2] === '1' ? 'hour' : 'hours') : m[3]}`;
     return c;
   }
+  // "Deadliest flood on record", "Costliest flood on record"
+  function badge(p) {
+    const max = (k) => state.events.reduce((m, f) => Math.max(m, f.properties[k] || 0), 0);
+    const b = [];
+    if (p.fatalities && p.fatalities === max('fatalities')) b.push('Deadliest flood on record');
+    if (p.losses_eur && p.losses_eur === max('losses_eur')) b.push('Costliest flood on record');
+    return b.map((x) => `<span class="badge">${x}</span>`).join(' ');
+  }
   function eventHTML(p) {
+    const sum = summary(p); // first: it decides whether the Cause row would just repeat the rainfall
     const rows = [
       p.storm && ['Type', esc(typeLabel(p.type))],
       ['Deaths', p.fatalities ? nf.format(p.fatalities) : 'None recorded'],
       p.persons_affected != null && ['People affected', `${nf.format(p.persons_affected)}<div class="muted">evacuated, injured or left homeless</div>`],
       p.area_inundated_km2 != null && ['Land under water', `${nf.format(p.area_inundated_km2)} km²`],
       p.losses_eur != null && ['Damage', `${euros(p.losses_eur)} <span class="muted">(2025 prices)</span>`],
-      p.cause && ['Cause', esc(cause(p.cause))],
+      p.cause && !p._rainInSummary && ['Cause', esc(cause(p.cause))],
       (p.rivers || []).length && [p.rivers.length > 1 ? 'Rivers' : 'River', esc(p.rivers.join(', '))],
       (p.region_names || []).length && ['Areas hit', esc(p.region_names.join(', '))],
     ].filter(Boolean);
@@ -922,7 +955,8 @@
     return `<div class="pp">
       <h3>${esc(p.name)}</h3>
       <div class="dt">${esc(sub)}</div>
-      <p class="summary">${esc(summary(p))}</p>
+      ${badge(p)}
+      <p class="summary">${esc(sum)}</p>
       ${related.map((a) => {
         const what = isFollowUp(a) ? 'land still under water weeks later' : 'flooded area seen by satellite';
         const on = state.emsLoaded.has(a.code);
@@ -945,9 +979,9 @@
   }
   function popupMulti(ids, lngLat) {
     const items = ids.map((id) => state.byId.get(id).properties).sort((a, b) => (a.start_date < b.start_date ? 1 : -1));
-    openPopup(lngLat, `<div class="pp"><h3>${items.length} major floods hit this same area</h3>
+    openPopup(lngLat, `<div class="pp"><h3>${items.length} major floods in ${esc(items[0].place || 'this area')}</h3>
       <div class="dt">They are drawn on the same spot. Pick one:</div>
-      ${items.map((p) => `<button class="btn" data-act="event" data-arg="${esc(p.id)}">${esc(fmtDate(p.start_date))}${p.fatalities ? ' · ' + plural(p.fatalities, 'death') : ''}</button>`).join('')}</div>`);
+      ${items.map((p) => `<button class="btn" data-act="event" data-arg="${esc(p.id)}">${esc(fmtDate(p.start_date))} · ${p.fatalities ? plural(p.fatalities, 'death') : 'no deaths'}</button>`).join('')}</div>`);
   }
 
   function popupExtent(p) {
@@ -1096,7 +1130,7 @@
     $('#legend').innerHTML = `
       <div class="lg-row"><span class="sw" style="background:${FLOOD_COLOR}"></span><b>Major flood</b></div>
       <div class="lg-row muted lg-indent">${state.is3d ? 'taller column (or bigger circle) = more deaths' : 'bigger circle = more deaths'}</div>
-      <div class="lg-row muted lg-indent">drawn in the middle of the area it hit</div>
+      <div class="lg-row muted lg-indent">drawn in the main area it hit</div>
       ${showLocal ? `<div class="lg-row"><span class="sw" style="background:${LOCAL_COLOR};width:8px;height:8px;margin:0 2px"></span><span>Village flood report, 2012–2018 <span class="muted">(zoom in)</span></span></div>` : ''}
       ${first ? `<div class="lg-row"><span class="sw sq" style="background:${EMS_COLOR}"></span>Under water, seen by satellite</div>` : ''}
       ${later ? `<div class="lg-row"><span class="sw sq" style="background:${EMS_LATER_COLOR}"></span>Still under water weeks later</div>` : ''}
@@ -1119,6 +1153,7 @@
 
   // ---------- floating panels ----------
   const isPhone = () => matchMedia('(max-width: 700px)').matches;
+  const coarse = matchMedia('(pointer: coarse)').matches;
   const openers = {};
   function openDrawer(on) {
     const d = $('#drawer');
@@ -1147,7 +1182,9 @@
     const top = rect('#topcard'), tl = rect('#timeline'), info = rect('#info');
     const bottomGap = innerHeight - Math.min(tl ? tl.top : innerHeight, info && isPhone() ? info.top : innerHeight);
     if (isPhone()) return { top: (top ? top.bottom : 0) + 10, bottom: bottomGap + 10, left: 20, right: 20 };
-    return { top: 40, bottom: bottomGap + 20, left: (top ? top.right : 0) + 20, right: info ? innerWidth - info.left + 20 : 70 };
+    const legend = $('#legend-box').open ? $('#legend-box').getBoundingClientRect() : null;
+    const right = info ? innerWidth - info.left + 20 : legend ? innerWidth - legend.left + 10 : 70;
+    return { top: 40, bottom: bottomGap + 20, left: (top ? top.right : 0) + 20, right };
   }
 
   // ---------- helpers ----------
