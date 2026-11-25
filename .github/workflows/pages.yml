@@ -23,6 +23,9 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      # stamp asset URLs with the commit so browsers never mix a new page with a cached old script
+      - name: Cache-bust app.js and style.css
+        run: sed -i "s/__BUILD__/${GITHUB_SHA::7}/g" web/index.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
