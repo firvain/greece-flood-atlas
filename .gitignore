@@ -1,0 +1,5 @@
+data/raw/
+pipeline/.venv/
+.playwright-mcp/
+__pycache__/
+.DS_Store

@@ -1,0 +1,322 @@
+[
+ {
+  "code": "EMSR117",
+  "name": "Flood in Greece",
+  "event_date": "2015-02-02",
+  "activation_date": "2015-02-02",
+  "bbox": [
+   20.12336,
+   38.99609,
+   21.15164,
+   39.6934
+  ],
+  "centroid": [
+   20.73336,
+   39.25869
+  ],
+  "url": "https://mapping.emergency.copernicus.eu/activations/EMSR117/",
+  "file": "ems/EMSR117.geojson",
+  "n_features": 1,
+  "area_km2": 59.88
+ },
+ {
+  "code": "EMSR122",
+  "name": "Flood in Greece",
+  "event_date": "2015-03-31",
+  "activation_date": "2015-03-31",
+  "bbox": [
+   23.35056,
+   40.75833,
+   23.88362,
+   41.08737
+  ],
+  "centroid": [
+   23.69775,
+   40.91868
+  ],
+  "url": "https://mapping.emergency.copernicus.eu/activations/EMSR122/",
+  "file": "ems/EMSR122.geojson",
+  "n_features": 10,
+  "area_km2": 74.34
+ },
+ {
+  "code": "EMSR257",
+  "name": "Flood in Attika- Greece",
+  "event_date": "2017-11-15",
+  "activation_date": "2017-11-19",
+  "bbox": [
+   23.34968,
+   37.9822,
+   23.53069,
+   38.08032
+  ],
+  "centroid": [
+   23.43837,
+   38.03691
+  ],
+  "url": "https://mapping.emergency.copernicus.eu/activations/EMSR257/",
+  "file": "ems/EMSR257.geojson",
+  "n_features": 3,
+  "area_km2": 4.96
+ },
+ {
+  "code": "EMSR271",
+  "name": "Floods in Central Greece",
+  "event_date": "2018-02-24",
+  "activation_date": "2018-02-26",
+  "bbox": [
+   21.63901,
+   39.03648,
+   22.79982,
+   39.79889
+  ],
+  "centroid": [
+   22.12366,
+   39.53212
+  ],
+  "url": "https://mapping.emergency.copernicus.eu/activations/EMSR271/",
+  "file": "ems/EMSR271.geojson",
+  "n_features": 7,
+  "area_km2": 113.33
+ },
+ {
+  "code": "EMSR277",
+  "name": "Flood in Thrace- Greece",
+  "event_date": "2018-03-29",
+  "activation_date": "2018-03-29",
+  "bbox": [
+   26.0433,
+   40.79842,
+   26.63501,
+   41.73633
+  ],
+  "centroid": [
+   26.37272,
+   41.18307
+  ],
+  "url": "https://mapping.emergency.copernicus.eu/activations/EMSR277/",
+  "file": "ems/EMSR277.geojson",
+  "n_features": 9,
+  "area_km2": 104.57
+ },
+ {
+  "code": "EMSR294",
+  "name": "Floods west of Athens- Greece ",
+  "event_date": "2018-06-20",
+  "activation_date": "2018-07-03",
+  "bbox": [
+   23.50382,
+   38.04147,
+   23.5325,
+   38.08828
+  ],
+  "centroid": [
+   23.51527,
+   38.05385
+  ],
+  "url": "https://mapping.emergency.copernicus.eu/activations/EMSR294/",
+  "file": "ems/EMSR294.geojson",
+  "n_features": 1,
+  "area_km2": 0.02
+ },
+ {
+  "code": "EMSR292",
+  "name": "Flood in North Eastern Greece",
+  "event_date": "2018-06-29",
+  "activation_date": "2018-06-29",
+  "bbox": [
+   24.55729,
+   40.85282,
+   24.96779,
+   41.07939
+  ],
+  "centroid": [
+   24.71034,
+   40.93296
+  ],
+  "url": "https://mapping.emergency.copernicus.eu/activations/EMSR292/",
+  "file": "ems/EMSR292.geojson",
+  "n_features": 1,
+  "area_km2": 16.9
+ },
+ {
+  "code": "EMSR337",
+  "name": "Flood in Western Greece",
+  "event_date": "2019-01-12",
+  "activation_date": "2019-01-14",
+  "bbox": [
+   21.57799,
+   37.5913,
+   21.89792,
+   37.65992
+  ],
+  "centroid": [
+   21.6609,
+   37.62095
+  ],
+  "url": "https://mapping.emergency.copernicus.eu/activations/EMSR337/",
+  "file": "ems/EMSR337.geojson",
+  "n_features": 2,
+  "area_km2": 1.63
+ },
+ {
+  "code": "EMSR413",
+  "name": "Flood in western Attika- Greece",
+  "event_date": "2019-11-25",
+  "activation_date": "2019-11-26",
+  "bbox": [
+   23.10254,
+   37.9215,
+   23.40037,
+   38.01088
+  ],
+  "centroid": [
+   23.29865,
+   37.97736
+  ],
+  "url": "https://mapping.emergency.copernicus.eu/activations/EMSR413/",
+  "file": "ems/EMSR413.geojson",
+  "n_features": 3,
+  "area_km2": 8.7
+ },
+ {
+  "code": "EMSR465",
+  "name": "Floods in Thessaly Region- Greece",
+  "event_date": "2020-09-18",
+  "activation_date": "2020-09-19",
+  "bbox": [
+   21.64091,
+   39.18465,
+   22.49812,
+   39.65614
+  ],
+  "centroid": [
+   22.05017,
+   39.41683
+  ],
+  "url": "https://mapping.emergency.copernicus.eu/activations/EMSR465/",
+  "file": "ems/EMSR465.geojson",
+  "n_features": 9,
+  "area_km2": 321.98
+ },
+ {
+  "code": "EMSR480",
+  "name": "Flood in Crete Region- Greece",
+  "event_date": "2020-11-10",
+  "activation_date": "2020-11-11",
+  "bbox": [
+   24.51544,
+   35.15875,
+   25.57105,
+   35.38656
+  ],
+  "centroid": [
+   25.38295,
+   35.20198
+  ],
+  "url": "https://mapping.emergency.copernicus.eu/activations/EMSR480/",
+  "file": "ems/EMSR480.geojson",
+  "n_features": 4,
+  "area_km2": 6.65
+ },
+ {
+  "code": "EMSR692",
+  "name": "Flood in Greece",
+  "event_date": "2023-09-05",
+  "activation_date": "2023-09-05",
+  "bbox": [
+   21.74331,
+   39.12011,
+   23.19834,
+   39.9458
+  ],
+  "centroid": [
+   22.21581,
+   39.47972
+  ],
+  "url": "https://mapping.emergency.copernicus.eu/activations/EMSR692/",
+  "file": "ems/EMSR692.geojson",
+  "n_features": 11,
+  "area_km2": 1368.09
+ },
+ {
+  "code": "EMSN184",
+  "name": "Flood in Thessaly Region, Greece",
+  "event_date": "2023-09-05",
+  "activation_date": "2023-11-23",
+  "bbox": [
+   22.54177,
+   39.43821,
+   22.88676,
+   39.67996
+  ],
+  "centroid": [
+   22.72614,
+   39.54724
+  ],
+  "url": "https://mapping.emergency.copernicus.eu/activations/EMSN184/",
+  "file": "ems/EMSN184.geojson",
+  "n_features": 2,
+  "area_km2": 108.17
+ },
+ {
+  "code": "EMSR697",
+  "name": "Flood in Thessaly and Sterea Ellada regions, Greece",
+  "event_date": "2023-09-27",
+  "activation_date": "2023-09-26",
+  "bbox": [
+   22.16364,
+   38.78305,
+   23.49497,
+   39.02345
+  ],
+  "centroid": [
+   22.60783,
+   38.85584
+  ],
+  "url": "https://mapping.emergency.copernicus.eu/activations/EMSR697/",
+  "file": "ems/EMSR697.geojson",
+  "n_features": 2,
+  "area_km2": 10.94
+ },
+ {
+  "code": "EMSR868",
+  "name": "Flood in Evros River basin, Greece",
+  "event_date": "2026-02-18",
+  "activation_date": "2026-02-20",
+  "bbox": [
+   25.92892,
+   40.72994,
+   26.63375,
+   41.65793
+  ],
+  "centroid": [
+   26.27215,
+   41.04727
+  ],
+  "url": "https://mapping.emergency.copernicus.eu/activations/EMSR868/",
+  "file": "ems/EMSR868.geojson",
+  "n_features": 4,
+  "area_km2": 106.1
+ },
+ {
+  "code": "EMSR933",
+  "name": "Flood in Crete, Greece",
+  "event_date": "2026-10-01",
+  "activation_date": "2026-10-04",
+  "bbox": [
+   23.88471,
+   35.00061,
+   25.93363,
+   35.34555
+  ],
+  "centroid": [
+   25.43536,
+   35.18579
+  ],
+  "url": "https://mapping.emergency.copernicus.eu/activations/EMSR933/",
+  "file": "ems/EMSR933.geojson",
+  "n_features": 6,
+  "area_km2": 4.8
+ }
+]

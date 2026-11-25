@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Greece Flood Atlas</title>
+  <meta name="description" content="Interactive 3D map of floods in Greece: major floods since 1887, local flood reports, satellite flood maps and official flood zones.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Greece Flood Atlas">
+  <meta property="og:description" content="Interactive 3D map of floods in Greece since 1887: deaths and damage, village-level flood reports, satellite flood maps and official flood zones.">
+  <meta property="og:url" content="https://firvain.github.io/greece-flood-atlas/">
+  <meta property="og:image" content="https://firvain.github.io/greece-flood-atlas/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#e8590c">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23e8590c'/%3E%3Cpath d='M6 19c3 0 3-3 5-3s2 3 5 3 3-3 5-3 2 3 5 3' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="map"></div>
+
+  <!-- top-left: title, search, headline numbers -->
+  <section id="topcard" class="card">
+    <div class="title-row">
+      <h1>Greece Flood Atlas</h1>
+      <button id="btn-about" class="icon-btn" type="button" aria-label="About this map" title="About this map">?</button>
+    </div>
+    <input id="f-search" type="search" placeholder="Search a place, river or storm" autocomplete="off" aria-label="Search floods">
+    <div class="stats-line">
+      <span><b id="st-events">–</b> major floods</span>
+      <span><b id="st-fatal">–</b> deaths</span>
+      <span id="st-years" class="muted"></span>
+    </div>
+    <button id="btn-list" class="wide-btn" type="button" aria-expanded="false" aria-controls="drawer">☰ List of floods</button>
+  </section>
+
+  <!-- slide-out list of floods -->
+  <aside id="drawer" class="card" hidden aria-label="List of floods">
+    <div class="drawer-head">
+      <h2>Floods <span id="list-count" class="muted"></span></h2>
+      <select id="sort" aria-label="Sort floods">
+        <option value="date">Newest first</option>
+        <option value="fatal">Most deaths</option>
+        <option value="affected">Most people affected</option>
+      </select>
+      <button id="drawer-close" class="icon-btn" type="button" aria-label="Close list">×</button>
+    </div>
+    <ol id="list"></ol>
+  </aside>
+
+  <!-- layers panel, opened by the Layers map button -->
+  <section id="layers" class="card" hidden aria-label="Map layers">
+    <div class="panel-head"><h2>Map layers</h2><button id="layers-close" class="icon-btn" type="button" aria-label="Close layers">×</button></div>
+    <div class="seg" role="radiogroup" aria-label="Background">
+      <label><input type="radio" name="bm" value="light" checked><span>Map</span></label>
+      <label><input type="radio" name="bm" value="sat"><span>Satellite photo</span></label>
+    </div>
+    <div id="lang-seg" class="seg" role="radiogroup" aria-label="Place names">
+      <label><input type="radio" name="lang" value="en" checked><span>English names</span></label>
+      <label><input type="radio" name="lang" value="el"><span>Ελληνικά ονόματα</span></label>
+    </div>
+    <label class="row"><input type="checkbox" id="l-events" checked> Major floods</label>
+    <label class="row"><input type="checkbox" id="l-regions"> Shade areas by
+      <select id="choro" aria-label="Shade areas by">
+        <option value="count">number of floods</option>
+        <option value="fatal">deaths</option>
+      </select>
+    </label>
+    <label class="row"><input type="checkbox" id="l-local" checked> Local flood reports, 2012–2018 (zoom in) <span id="local-count" class="muted"></span></label>
+    <label class="row"><input type="checkbox" id="l-ems"> Land under water, seen by satellite</label>
+    <div id="wms-list"></div>
+  </section>
+
+  <!-- details of whatever was clicked (replaces map popups, which would sit under the cards) -->
+  <section id="info" class="card" hidden aria-live="polite" aria-label="Details"></section>
+
+  <!-- legend (collapsible) -->
+  <details id="legend-box" class="card" open>
+    <summary>Legend</summary>
+    <div id="legend"></div>
+  </details>
+
+  <!-- bottom: timeline + quick filters -->
+  <section id="timeline" class="card" aria-label="Timeline and filters">
+    <div class="tl-head">
+      <span class="tl-title">Floods per year</span>
+      <span class="yr">
+        <input id="f-ymin" type="number" inputmode="numeric" aria-label="From year">
+        <span>–</span>
+        <input id="f-ymax" type="number" inputmode="numeric" aria-label="To year">
+        <button id="f-yreset" class="link" type="button">all years</button>
+      </span>
+    </div>
+    <svg id="tl-svg" preserveAspectRatio="none" role="img" aria-label="Bar chart of floods per year. Drag to pick years, double-click to reset."></svg>
+    <div class="tl-filters">
+      <div id="f-types" class="chips" aria-label="Type of flood"></div>
+      <label class="chip toggle"><input type="checkbox" id="f-deadly"> Only floods with deaths</label>
+    </div>
+  </section>
+
+  <div id="toast" hidden></div>
+
+  <dialog id="about">
+    <h2>About this map</h2>
+    <p><b>Major floods (1887–2025)</b> come from the
+      <a href="https://zenodo.org/records/17226475/latest" target="_blank" rel="noopener">HANZE database</a> of European floods (Paprotny et al.).
+      It lists only significant floods with recorded deaths, damage or people affected. Each one is drawn in the middle of the areas it hit, not at the exact town.</p>
+    <p><b>Local flood reports (2012–2018)</b> are village-level records collected by the Greek Ministry of Environment &amp; Energy for the national flood-risk plans.</p>
+    <p><b>Satellite flood maps</b> show land seen under water by the EU's
+      <a href="https://rapidmapping.emergency.copernicus.eu/" target="_blank" rel="noopener">Copernicus Emergency Management Service</a>.</p>
+    <p><b>Official flood zones</b> are the Ministry's flood hazard and risk maps under the EU Floods Directive, plus Copernicus European flood models.</p>
+    <h3>Sources and licences</h3>
+    <ul class="src-list">
+      <li>Major floods: Paprotny, D. (2026) <i>HANZE database of historical flood impacts in Europe, 1870–2025</i>, v3.0.2 beta.
+        <a href="https://doi.org/10.5281/zenodo.23670886" target="_blank" rel="noopener">doi:10.5281/zenodo.23670886</a>, CC BY 4.0.</li>
+      <li>Satellite flood maps: © European Union, Copernicus Emergency Management Service (Rapid Mapping and Risk &amp; Recovery activations in Greece, 2015–2026).</li>
+      <li>Local flood reports and flood zones: Greek Ministry of Environment &amp; Energy, Special Secretariat for Water, flood risk management plans (<a href="https://floods.ypeka.gr/" target="_blank" rel="noopener">floods.ypeka.gr</a>).</li>
+      <li>European flood models: Copernicus EMS EFAS / GloFAS (JRC).</li>
+      <li>Base map: © OpenStreetMap contributors, OpenMapTiles, OpenFreeMap. Satellite photo: Esri, Maxar, Earthstar Geographics. Terrain: Mapzen / AWS Terrain Tiles.</li>
+    </ul>
+    <p class="muted">Tips: drag the timeline to pick years. In 3D, right-click and drag (or use two fingers) to tilt and turn the map; ⟳ rotates it slowly.</p>
+    <form method="dialog"><button class="wide-btn">Close</button></form>
+  </dialog>
+
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

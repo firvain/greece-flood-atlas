@@ -1,0 +1,134 @@
+[
+  {
+    "id": "gr_fd_flood_extent_t50",
+    "title": "Flood hazard extent T=50 yr (Floods Directive, Greece)",
+    "type": "wms",
+    "url": "https://gis.floods.ypeka.gr/geoserver/floods_rev1/wms?service=WMS&version=1.1.1&request=GetMap&layers=el01_friv_0050_rev1,el02_friv_0050_rev1,el03_friv_0050_rev1,el04_friv_0050_rev1,el05_friv_0050_rev1,el06_friv_0050_rev1,el07_friv_0050_rev1,el08_friv_0050_rev1,el09_friv_0050_rev1,el10_friv_0050_rev1,el11_friv_0050_rev1,el12_friv_0050_rev1,el13_friv_0050_rev1,el14_friv_0050_rev1&styles=&format=image%2Fpng&transparent=true&srs=EPSG%3A3857&width=256&height=256&bbox={bbox-epsg-3857}",
+    "layers": "el01_friv_0050_rev1,el02_friv_0050_rev1,el03_friv_0050_rev1,el04_friv_0050_rev1,el05_friv_0050_rev1,el06_friv_0050_rev1,el07_friv_0050_rev1,el08_friv_0050_rev1,el09_friv_0050_rev1,el10_friv_0050_rev1,el11_friv_0050_rev1,el12_friv_0050_rev1,el13_friv_0050_rev1,el14_friv_0050_rev1",
+    "format": "image/png",
+    "attribution": "© Υπουργείο Περιβάλλοντος & Ενέργειας / Ειδική Γραμματεία Υδάτων — Σχέδια Διαχείρισης Κινδύνων Πλημμύρας (Οδηγία 2007/60/ΕΚ), gis.floods.ypeka.gr",
+    "verified": true,
+    "notes": "Source: Greek Ministry of Environment & Energy (YPEN) FRMP geoportal GeoServer, workspace floods_rev1 (Floods Directive 2nd cycle / 1st revision). Service publishes one layer per River Basin District (EL01–EL14); this URL requests all of them in one comma-separated WMS LAYERS list so it covers all Greece. CORS: Access-Control-Allow-Origin: * returned on GetMap. Legend: https://gis.floods.ypeka.gr/geoserver/floods_rev1/wms?service=WMS&version=1.1.1&request=GetLegendGraphic&format=image/png&layer=<one layer name>. Layers elNN_friv_0050_rev1 ('Όρια Πλημμυρών (Τ=50)'): modelled fluvial flood inundation extent for return period 50 years within the APSFRs. Blue outline + light-blue fill."
+  },
+  {
+    "id": "gr_fd_flood_extent_t100",
+    "title": "Flood hazard extent T=100 yr (Floods Directive, Greece)",
+    "type": "wms",
+    "url": "https://gis.floods.ypeka.gr/geoserver/floods_rev1/wms?service=WMS&version=1.1.1&request=GetMap&layers=el01_friv_0100_rev1,el02_friv_0100_rev1,el03_friv_0100_rev1,el04_friv_0100_rev1,el05_friv_0100_rev1,el06_friv_0100_rev1,el07_friv_0100_rev1,el08_friv_0100_rev1,el09_friv_0100_rev1,el10_friv_0100_rev1,el11_friv_0100_rev1,el12_friv_0100_rev1,el13_friv_0100_rev1,el14_friv_0100_rev1&styles=&format=image%2Fpng&transparent=true&srs=EPSG%3A3857&width=256&height=256&bbox={bbox-epsg-3857}",
+    "layers": "el01_friv_0100_rev1,el02_friv_0100_rev1,el03_friv_0100_rev1,el04_friv_0100_rev1,el05_friv_0100_rev1,el06_friv_0100_rev1,el07_friv_0100_rev1,el08_friv_0100_rev1,el09_friv_0100_rev1,el10_friv_0100_rev1,el11_friv_0100_rev1,el12_friv_0100_rev1,el13_friv_0100_rev1,el14_friv_0100_rev1",
+    "format": "image/png",
+    "attribution": "© Υπουργείο Περιβάλλοντος & Ενέργειας / Ειδική Γραμματεία Υδάτων — Σχέδια Διαχείρισης Κινδύνων Πλημμύρας (Οδηγία 2007/60/ΕΚ), gis.floods.ypeka.gr",
+    "verified": true,
+    "notes": "Source: Greek Ministry of Environment & Energy (YPEN) FRMP geoportal GeoServer, workspace floods_rev1 (Floods Directive 2nd cycle / 1st revision). Service publishes one layer per River Basin District (EL01–EL14); this URL requests all of them in one comma-separated WMS LAYERS list so it covers all Greece. CORS: Access-Control-Allow-Origin: * returned on GetMap. Legend: https://gis.floods.ypeka.gr/geoserver/floods_rev1/wms?service=WMS&version=1.1.1&request=GetLegendGraphic&format=image/png&layer=<one layer name>. Layers elNN_friv_0100_rev1 ('Όρια Πλημμυρών (Τ=100)'): modelled fluvial flood inundation extent for return period 100 years within the APSFRs. Blue outline + light-blue fill."
+  },
+  {
+    "id": "gr_fd_flood_extent_t1000",
+    "title": "Flood hazard extent T=1000 yr (Floods Directive, Greece)",
+    "type": "wms",
+    "url": "https://gis.floods.ypeka.gr/geoserver/floods_rev1/wms?service=WMS&version=1.1.1&request=GetMap&layers=el01_friv_1000_rev1,el02_friv_1000_rev1,el03_friv_1000_rev1,el04_friv_1000_rev1,el05_friv_1000_rev1,el06_friv_1000_rev1,el07_friv_1000_rev1,el08_friv_1000_rev1,el09_friv_1000_rev1,el10_friv_1000_rev1,el11_friv_1000_rev1,el12_friv_1000_rev1,el13_friv_1000_rev1,el14_friv_1000_rev1&styles=&format=image%2Fpng&transparent=true&srs=EPSG%3A3857&width=256&height=256&bbox={bbox-epsg-3857}",
+    "layers": "el01_friv_1000_rev1,el02_friv_1000_rev1,el03_friv_1000_rev1,el04_friv_1000_rev1,el05_friv_1000_rev1,el06_friv_1000_rev1,el07_friv_1000_rev1,el08_friv_1000_rev1,el09_friv_1000_rev1,el10_friv_1000_rev1,el11_friv_1000_rev1,el12_friv_1000_rev1,el13_friv_1000_rev1,el14_friv_1000_rev1",
+    "format": "image/png",
+    "attribution": "© Υπουργείο Περιβάλλοντος & Ενέργειας / Ειδική Γραμματεία Υδάτων — Σχέδια Διαχείρισης Κινδύνων Πλημμύρας (Οδηγία 2007/60/ΕΚ), gis.floods.ypeka.gr",
+    "verified": true,
+    "notes": "Source: Greek Ministry of Environment & Energy (YPEN) FRMP geoportal GeoServer, workspace floods_rev1 (Floods Directive 2nd cycle / 1st revision). Service publishes one layer per River Basin District (EL01–EL14); this URL requests all of them in one comma-separated WMS LAYERS list so it covers all Greece. CORS: Access-Control-Allow-Origin: * returned on GetMap. Legend: https://gis.floods.ypeka.gr/geoserver/floods_rev1/wms?service=WMS&version=1.1.1&request=GetLegendGraphic&format=image/png&layer=<one layer name>. Layers elNN_friv_1000_rev1 ('Όρια Πλημμυρών (Τ=1000)'): modelled fluvial flood inundation extent for return period 1000 years within the APSFRs. Blue outline + light-blue fill."
+  },
+  {
+    "id": "gr_fd_flood_depth_t100",
+    "title": "Flood hazard max water depth T=100 yr (Floods Directive, Greece)",
+    "type": "wms",
+    "url": "https://gis.floods.ypeka.gr/geoserver/floods_rev1/wms?service=WMS&version=1.1.1&request=GetMap&layers=EL01_DMAX_0100,EL02_DMAX_0100,EL03_DMAX_0100,EL04_DMAX_0100,EL05_DMAX_0100,EL06_DMAX_0100,EL07_DMAX_0100,EL08_DMAX_0100,EL09_DMAX_0100,EL10_DMAX_0100_DEFLATE,EL11_DM%CE%91%CE%A7_0100,EL12_DMAX_0100,EL13_DMAX_0100,EL14_DMAX_0100_ANDROS,EL14_DMAX_0100_CHIOS,EL14_DMAX_0100_KALUMNOS,EL14_DMAX_0100_KASOS,EL14_DMAX_0100_KIMWLOS_MHLOS,EL14_DMAX_0100_KWS,EL14_DMAX_0100_LEROS,EL14_DMAX_0100_LESVOS,EL14_DMAX_0100_LIMNOS,EL14_DMAX_0100_NAXOS,EL14_DMAX_0100_PAROS,EL14_DMAX_0100_PSERIMOS,EL14_DMAX_0100_RODOS,EL14_DMAX_0100_SAMOS,EL14_DMAX_0100_SYMH&styles=&format=image%2Fpng&transparent=true&srs=EPSG%3A3857&width=256&height=256&bbox={bbox-epsg-3857}",
+    "layers": "EL01_DMAX_0100,EL02_DMAX_0100,EL03_DMAX_0100,EL04_DMAX_0100,EL05_DMAX_0100,EL06_DMAX_0100,EL07_DMAX_0100,EL08_DMAX_0100,EL09_DMAX_0100,EL10_DMAX_0100_DEFLATE,EL11_DMΑΧ_0100,EL12_DMAX_0100,EL13_DMAX_0100,EL14_DMAX_0100_ANDROS,EL14_DMAX_0100_CHIOS,EL14_DMAX_0100_KALUMNOS,EL14_DMAX_0100_KASOS,EL14_DMAX_0100_KIMWLOS_MHLOS,EL14_DMAX_0100_KWS,EL14_DMAX_0100_LEROS,EL14_DMAX_0100_LESVOS,EL14_DMAX_0100_LIMNOS,EL14_DMAX_0100_NAXOS,EL14_DMAX_0100_PAROS,EL14_DMAX_0100_PSERIMOS,EL14_DMAX_0100_RODOS,EL14_DMAX_0100_SAMOS,EL14_DMAX_0100_SYMH",
+    "format": "image/png",
+    "attribution": "© Υπουργείο Περιβάλλοντος & Ενέργειας / Ειδική Γραμματεία Υδάτων — Σχέδια Διαχείρισης Κινδύνων Πλημμύρας (Οδηγία 2007/60/ΕΚ), gis.floods.ypeka.gr",
+    "verified": true,
+    "notes": "Source: Greek Ministry of Environment & Energy (YPEN) FRMP geoportal GeoServer, workspace floods_rev1 (Floods Directive 2nd cycle / 1st revision). Service publishes one layer per River Basin District (EL01–EL14); this URL requests all of them in one comma-separated WMS LAYERS list so it covers all Greece. CORS: Access-Control-Allow-Origin: * returned on GetMap. Legend: https://gis.floods.ypeka.gr/geoserver/floods_rev1/wms?service=WMS&version=1.1.1&request=GetLegendGraphic&format=image/png&layer=<one layer name>. Raster layers ELNN_DMAX_0100 ('Μέγιστο Βάθος (T=100)'); EL10 uses the *_DEFLATE variant, EL11 name contains Greek capital letters Α/Χ (URL-encoded), EL14 (Aegean islands) is split per island. Also available: T=50 and T=1000 (DMAX_0050/DMAX_1000) and max velocity (VMAX_*). Blue depth ramp."
+  },
+  {
+    "id": "gr_fd_flood_risk_t100",
+    "title": "Flood risk (impact assessment) T=100 yr (Floods Directive, Greece)",
+    "type": "wms",
+    "url": "https://gis.floods.ypeka.gr/geoserver/floods_rev1/wms?service=WMS&version=1.1.1&request=GetMap&layers=el01_risk_0100,el02_risk_0100,el03_risk_0100,el04_risk_0100,el05_risk_0100,el06_risk_0100,el07_risk_0100,el08_risk_0100,el09_risk_0100,el10_risk_0100,el11_risk_0100,el12_risk_0100,el13_risk_0100,el14_risk_0100&styles=&format=image%2Fpng&transparent=true&srs=EPSG%3A3857&width=256&height=256&bbox={bbox-epsg-3857}",
+    "layers": "el01_risk_0100,el02_risk_0100,el03_risk_0100,el04_risk_0100,el05_risk_0100,el06_risk_0100,el07_risk_0100,el08_risk_0100,el09_risk_0100,el10_risk_0100,el11_risk_0100,el12_risk_0100,el13_risk_0100,el14_risk_0100",
+    "format": "image/png",
+    "attribution": "© Υπουργείο Περιβάλλοντος & Ενέργειας / Ειδική Γραμματεία Υδάτων — Σχέδια Διαχείρισης Κινδύνων Πλημμύρας (Οδηγία 2007/60/ΕΚ), gis.floods.ypeka.gr",
+    "verified": true,
+    "notes": "Source: Greek Ministry of Environment & Energy (YPEN) FRMP geoportal GeoServer, workspace floods_rev1 (Floods Directive 2nd cycle / 1st revision). Service publishes one layer per River Basin District (EL01–EL14); this URL requests all of them in one comma-separated WMS LAYERS list so it covers all Greece. CORS: Access-Control-Allow-Origin: * returned on GetMap. Legend: https://gis.floods.ypeka.gr/geoserver/floods_rev1/wms?service=WMS&version=1.1.1&request=GetLegendGraphic&format=image/png&layer=<one layer name>. Layers elNN_risk_0100 ('Αποτίμηση των επιπτώσεων πλημμυρών (T=100)'), default style el_risk_risk (green→yellow→orange→red risk classes with black block outlines). Outlines dominate at small scales (renders almost black at z<=9); best used at z>=11. Alternate styles el_risk_haza / el_risk_vuln exist. T=50 and T=1000 also available (risk_0050/risk_1000)."
+  },
+  {
+    "id": "gr_fd_apsfr_2019",
+    "title": "Areas of Potential Significant Flood Risk (APSFR / ΖΔΥΚΠ, 2019 review)",
+    "type": "wms",
+    "url": "https://gis.floods.ypeka.gr/geoserver/floods_rev1/wms?service=WMS&version=1.1.1&request=GetMap&layers=hyp_pol_apsfr2019_v1&styles=&format=image%2Fpng&transparent=true&srs=EPSG%3A3857&width=256&height=256&bbox={bbox-epsg-3857}",
+    "layers": "hyp_pol_apsfr2019_v1",
+    "format": "image/png",
+    "attribution": "© Υπουργείο Περιβάλλοντος & Ενέργειας / Ειδική Γραμματεία Υδάτων — Σχέδια Διαχείρισης Κινδύνων Πλημμύρας (Οδηγία 2007/60/ΕΚ), gis.floods.ypeka.gr",
+    "verified": true,
+    "notes": "Source: Greek Ministry of Environment & Energy (YPEN) FRMP geoportal GeoServer, workspace floods_rev1 (Floods Directive 2nd cycle / 1st revision). CORS: Access-Control-Allow-Origin: * returned on GetMap. Legend: https://gis.floods.ypeka.gr/geoserver/floods_rev1/wms?service=WMS&version=1.1.1&request=GetLegendGraphic&format=image/png&layer=<one layer name>. National layer hyp_pol_apsfr2019_v1 ('Ζώνες Δυνητικά Υψηλού Κινδύνου (2019)'), style zones_dinitika_ipsilou_kindinou: filled polygons (light green etc., black outline) — fairly opaque, use raster-opacity ~0.5."
+  },
+  {
+    "id": "gr_fd_apsfr_rivers",
+    "title": "APSFR river network (ΖΔΥΚΠ hydrographic network)",
+    "type": "wms",
+    "url": "https://gis.floods.ypeka.gr/geoserver/floods_rev1/wms?service=WMS&version=1.1.1&request=GetMap&layers=el01_hntz,el02_hntz,el03_hntz,el04_hntz,el05_hntz,el06_hntz,el07_hntz,el08_hntz,el09_hntz,el10_hntz,el11_hntz,el12_hntz,el13_hntz,el14_hntz&styles=&format=image%2Fpng&transparent=true&srs=EPSG%3A3857&width=256&height=256&bbox={bbox-epsg-3857}",
+    "layers": "el01_hntz,el02_hntz,el03_hntz,el04_hntz,el05_hntz,el06_hntz,el07_hntz,el08_hntz,el09_hntz,el10_hntz,el11_hntz,el12_hntz,el13_hntz,el14_hntz",
+    "format": "image/png",
+    "attribution": "© Υπουργείο Περιβάλλοντος & Ενέργειας / Ειδική Γραμματεία Υδάτων — Σχέδια Διαχείρισης Κινδύνων Πλημμύρας (Οδηγία 2007/60/ΕΚ), gis.floods.ypeka.gr",
+    "verified": true,
+    "notes": "Source: Greek Ministry of Environment & Energy (YPEN) FRMP geoportal GeoServer, workspace floods_rev1 (Floods Directive 2nd cycle / 1st revision). Service publishes one layer per River Basin District (EL01–EL14); this URL requests all of them in one comma-separated WMS LAYERS list so it covers all Greece. CORS: Access-Control-Allow-Origin: * returned on GetMap. Legend: https://gis.floods.ypeka.gr/geoserver/floods_rev1/wms?service=WMS&version=1.1.1&request=GetLegendGraphic&format=image/png&layer=<one layer name>. Layers elNN_hntz ('Υδρογραφικό δίκτυο της ΖΔΥΚΠ'): river reaches within the APSFRs that were hydraulically modelled."
+  },
+  {
+    "id": "gr_river_basin_districts",
+    "title": "River Basin Districts of Greece (ΛΑΠ / ΥΔ, outlines)",
+    "type": "wms",
+    "url": "https://gis.floods.ypeka.gr/geoserver/floods_rev1/wms?service=WMS&version=1.1.1&request=GetMap&layers=hyd_pol_lap_potamon_eladas&styles=line&format=image%2Fpng&transparent=true&srs=EPSG%3A3857&width=256&height=256&bbox={bbox-epsg-3857}",
+    "layers": "hyd_pol_lap_potamon_eladas",
+    "format": "image/png",
+    "attribution": "© Υπουργείο Περιβάλλοντος & Ενέργειας / Ειδική Γραμματεία Υδάτων — Σχέδια Διαχείρισης Κινδύνων Πλημμύρας (Οδηγία 2007/60/ΕΚ), gis.floods.ypeka.gr",
+    "verified": true,
+    "notes": "Source: YPEN FRMP geoportal GeoServer (floods_rev1). National layer hyd_pol_lap_potamon_eladas ('Λεκάνες Απορροής Ποταμών (ΛΑΠ) Ελλάδας') requested with the GeoServer built-in 'line' style (blue outlines only); its default 'generic' style is an opaque grey fill. hyd_pol_ydatika_diamerismata (Υδατικά Διαμερίσματα) is an equivalent layer. CORS: Access-Control-Allow-Origin: *."
+  },
+  {
+    "id": "gr_fd_flood_events",
+    "title": "Recorded flood events (PFRA flood event points, Greece)",
+    "type": "wms",
+    "url": "https://gis.floods.ypeka.gr/geoserver/floods_rev1/wms?service=WMS&version=1.1.1&request=GetMap&layers=hyd_poi_all_floods_v1&styles=&format=image%2Fpng&transparent=true&srs=EPSG%3A3857&width=256&height=256&bbox={bbox-epsg-3857}",
+    "layers": "hyd_poi_all_floods_v1",
+    "format": "image/png",
+    "attribution": "© Υπουργείο Περιβάλλοντος & Ενέργειας / Ειδική Γραμματεία Υδάτων — Σχέδια Διαχείρισης Κινδύνων Πλημμύρας (Οδηγία 2007/60/ΕΚ), gis.floods.ypeka.gr",
+    "verified": true,
+    "notes": "Source: YPEN FRMP geoportal GeoServer (floods_rev1). National point layer hyd_poi_all_floods_v1 ('Πλημμυρικά Συμβάντα') from the Preliminary Flood Risk Assessment; hyd_poi_historical_floods_v1 ('Ιστορικά Συμβάντα Πλημμυρών') is a related subset. CORS: Access-Control-Allow-Origin: *."
+  },
+  {
+    "id": "efas_flood_hazard_scenarios",
+    "title": "JRC/EFAS European river flood hazard (combined return-period scenarios)",
+    "type": "wms",
+    "url": "https://european-flood.emergency.copernicus.eu/api/wms/?service=WMS&version=1.1.1&request=GetMap&layers=mapserver%3AEurope_combined_flood_scenarios&styles=&format=image%2Fpng&transparent=true&srs=EPSG%3A3857&width=256&height=256&bbox={bbox-epsg-3857}",
+    "layers": "mapserver:Europe_combined_flood_scenarios",
+    "format": "image/png",
+    "attribution": "© European Union, Copernicus Emergency Management Service — EFAS / JRC flood hazard maps",
+    "verified": true,
+    "notes": "Copernicus EMS EFAS public WMS (no token needed for this layer). Layer 'Flood Inundation Scenarios' = JRC pan-European river flood hazard maps (100 m, EFAS-based) with return periods combined into one classed raster (blue shades: darker = more frequent). ~100 m resolution so coarse vs. national FD maps. CORS: Access-Control-Allow-Origin: *."
+  },
+  {
+    "id": "glofas_flood_hazard_100y",
+    "title": "JRC/GloFAS global flood hazard T=100 yr",
+    "type": "wms",
+    "url": "https://ows.globalfloods.eu/glofas-ows/ows.py?service=WMS&version=1.1.1&request=GetMap&layers=FloodHazard100y&styles=&format=image%2Fpng&transparent=true&srs=EPSG%3A3857&width=256&height=256&bbox={bbox-epsg-3857}",
+    "layers": "FloodHazard100y",
+    "format": "image/png",
+    "attribution": "© European Union, Copernicus Emergency Management Service — GloFAS / JRC",
+    "verified": true,
+    "notes": "Copernicus EMS GloFAS public WMS. 'Inundated areas for flood events with a return period of 100 years, based on GloFAS climatology' (JRC global river flood hazard map, ~90 m) plus permanent water bodies. CORS: Access-Control-Allow-Origin: *."
+  },
+  {
+    "id": "glofas_major_rivers",
+    "title": "Major rivers (GloFAS river network)",
+    "type": "wms",
+    "url": "https://ows.globalfloods.eu/glofas-ows/ows.py?service=WMS&version=1.1.1&request=GetMap&layers=MajorRivers1&styles=&format=image%2Fpng&transparent=true&srs=EPSG%3A3857&width=256&height=256&bbox={bbox-epsg-3857}",
+    "layers": "MajorRivers1",
+    "format": "image/png",
+    "attribution": "© European Union, Copernicus Emergency Management Service — GloFAS",
+    "verified": true,
+    "notes": "Copernicus EMS GloFAS public WMS, layer MajorRivers1 (blue river network lines, context layer). CORS: Access-Control-Allow-Origin: *."
+  }
+]
