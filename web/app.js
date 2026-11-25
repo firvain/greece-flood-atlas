@@ -1,7 +1,9 @@
 /* Greece Flood Atlas — MapLibre GL JS front end. Reads files described in DATA_CONTRACT.md. */
 (async () => {
   'use strict';
-  const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+  // Light/Dark chosen in the Layers panel wins; otherwise follow the computer's setting
+  const themePref = document.documentElement.dataset.theme || 'auto';
+  const dark = themePref === 'dark' || (themePref === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
 
   const TYPE_LABEL = { flash: 'Flash flood', river: 'River flood', coastal: 'Coastal flood', compound: 'River & coastal flood', pluvial: 'Urban flood' };
   const typeLabel = (t) => TYPE_LABEL[t] || 'Other flood';
@@ -582,6 +584,13 @@
     document.querySelectorAll('input[name="bm"]').forEach((r) => r.addEventListener('change', (e) => {
       const sat = e.target.value === 'sat';
       vis(['bm-sat'], sat); vis(['bm-light'], !sat);
+    }));
+    // appearance: the base map style is chosen at load, so a change reloads the page (camera kept in the URL)
+    const themeInput = document.querySelector(`input[name="theme"][value="${themePref}"]`);
+    if (themeInput) themeInput.checked = true;
+    document.querySelectorAll('input[name="theme"]').forEach((r) => r.addEventListener('change', (e) => {
+      try { e.target.value === 'auto' ? localStorage.removeItem('gfa-theme') : localStorage.setItem('gfa-theme', e.target.value); } catch {}
+      location.reload();
     }));
     // place-name language
     if (!baseLabelIds.length) $('#lang-seg').hidden = true;

@@ -317,3 +317,5 @@ body:not(.ready) .headline::after { content: " · loading…"; color: var(--mute
   #timeline.years-filtered #f-yreset { display: inline; }
   .tl-head { min-height: 18px; }
 }
+
+.seg.seg3 { grid-template-columns: 1fr 1fr 1fr; }
