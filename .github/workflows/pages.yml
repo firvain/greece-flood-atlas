@@ -1,4 +1,6 @@
 # Publishes the static site in web/ to GitHub Pages on every push to main.
+# Two jobs (build → deploy), as in GitHub's template: running deploy in the same job as the upload
+# intermittently failed with "No artifacts named github-pages were found".
 name: Deploy to GitHub Pages
 
 on:
@@ -13,14 +15,11 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       # stamp asset URLs with the commit so browsers never mix a new page with a cached old script
@@ -30,5 +29,13 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v4
