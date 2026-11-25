@@ -250,7 +250,7 @@ def main() -> int:
         hanze_notes = none_if_nan(r.get("notes"))
         storm = labels.storm_name(hanze_notes, none_if_nan(r.get("cause")))
         ev_type = norm_type(r["event_type"])
-        name = labels.event_title(ev_type, codes, storm)
+        name = labels.event_title(ev_type, codes, storm, int(r["id"]))
 
         start = norm_date(r["start_date"])
         end = norm_date(r["end_date"])
@@ -295,7 +295,8 @@ def main() -> int:
             "losses_note": losses_note,
             "region_ids": codes,
             "region_names": region_names,
-            "search_el": " ".join(labels.REGION_NAMES_EL.get(c, "") for c in codes),
+            "search_el": " ".join(labels.REGION_NAMES_EL.get(c, "") for c in codes)
+            + (" Μάνδρα Mandra" if int(r["id"]) == 2135 else ""),
             "cause": none_if_nan(r.get("cause")),
             "notes": notes,
             "references": "; ".join(ref_texts) or None,

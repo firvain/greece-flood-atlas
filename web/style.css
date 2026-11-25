@@ -8,21 +8,22 @@
   --accent-soft: #e6efff;
   --card: rgba(255, 255, 255, 0.95);
   --shadow: 0 2px 12px rgba(16, 24, 40, 0.16);
-  --bar: #9bb7e0;
-  --bar-on: #1f6feb;
+  --bar: #f7c4a5;
+  --bar-on: #e8590c;
+  --flood: #e8590c;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0f141a; --panel: #151b23; --ink: #e6edf3; --muted: #8b98a8; --line: #2a333f;
     --accent: #58a6ff; --accent-soft: #1a2a40; --card: rgba(21, 27, 35, 0.95);
-    --shadow: 0 2px 14px rgba(0, 0, 0, 0.55); --bar: #36506f; --bar-on: #58a6ff; color-scheme: dark;
+    --shadow: 0 2px 14px rgba(0, 0, 0, 0.55); --bar: #6b3a20; --bar-on: #f76707; --flood: #f76707; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0f141a; --panel: #151b23; --ink: #e6edf3; --muted: #8b98a8; --line: #2a333f;
   --accent: #58a6ff; --accent-soft: #1a2a40; --card: rgba(21, 27, 35, 0.95);
-  --shadow: 0 2px 14px rgba(0, 0, 0, 0.55); --bar: #36506f; --bar-on: #58a6ff; color-scheme: dark;
+  --shadow: 0 2px 14px rgba(0, 0, 0, 0.55); --bar: #6b3a20; --bar-on: #f76707; --flood: #f76707; color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -213,3 +214,106 @@ dialog#about .wide-btn { text-align: center; margin-top: 8px; }
 
 /* panels that hold reading text are fully opaque (the 95% card background let the timeline show through) */
 #info, #drawer, #layers { background: var(--panel); }
+
+/* ---------- story-first top card ---------- */
+#topcard { width: 330px; }
+.kicker {
+  background: none; border: 0; padding: 0; cursor: pointer; color: var(--muted);
+  font: 700 11px/1.2 system-ui, sans-serif; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.kicker:hover { color: var(--ink); }
+.headline { margin: 0; font-size: 20px; line-height: 1.25; font-weight: 700; letter-spacing: -0.01em; }
+.headline .hl-num { color: var(--flood); }
+.sub { margin: 0; font-size: 13px; color: var(--muted); }
+.stories { display: flex; flex-wrap: wrap; gap: 6px; }
+.stories button {
+  border: 1px solid var(--flood); color: var(--flood); background: transparent; border-radius: 999px;
+  padding: 4px 11px; font: 600 12.5px/1.3 system-ui, sans-serif; cursor: pointer;
+}
+.stories button:hover { background: var(--flood); color: #fff; }
+.filter-status { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--muted); }
+.filter-status[hidden] { display: none; }
+body:not(.ready) .headline::after { content: " · loading…"; color: var(--muted); font-weight: 400; font-size: 13px; }
+
+/* drawer and legend sit under the top card, whatever its height */
+#drawer { top: calc(var(--topcard-bottom, 300px) + 8px); width: 330px; }
+
+/* map buttons: state you can see */
+.maplibregl-ctrl button.ctrl-text { width: auto !important; padding: 0 8px !important; font: 600 12px/1 system-ui, sans-serif; color: #333; }
+.maplibregl-ctrl button.ctrl-on { background: #1f6feb !important; color: #fff !important; }
+.maplibregl-ctrl button.ctrl-home { font-size: 17px; line-height: 1; color: #333; }
+
+/* panels open left of the map buttons, never over them */
+#layers, #info { right: 92px; }
+
+/* timeline */
+.tl-hint { color: var(--muted); font-weight: 400; }
+.tl-show { font-size: 12.5px; color: var(--muted); }
+.chips .chip[aria-pressed="true"]::before { content: "✓"; font-size: 11px; color: var(--flood); }
+.chip[aria-pressed="false"] { opacity: 0.5; text-decoration: line-through; }
+
+/* details card */
+.pp .summary { margin: 6px 0 4px; font-size: 13.5px; line-height: 1.45; }
+.pp .btn[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.pp .btn.later { border-color: #3bc9db; color: #0c8599; }
+.pp .btn.later[aria-pressed="true"] { background: #66d9e8; color: #063d44; }
+#legend .lg-indent { margin-left: 18px; font-size: 11.5px; }
+
+/* hover tooltip (desktop) */
+#tip {
+  position: absolute; z-index: 6; pointer-events: none; background: var(--panel); color: var(--ink);
+  box-shadow: var(--shadow); border-radius: 6px; padding: 4px 8px; font-size: 12.5px; white-space: nowrap;
+}
+#tip[hidden] { display: none; }
+
+@media (max-width: 700px) {
+  #topcard { width: auto; right: 64px; }
+  .headline { font-size: 17px; }
+  .sub { font-size: 12.5px; }
+  .stories { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-right: -10px; padding-right: 10px;
+    -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  .stories button { white-space: nowrap; padding: 7px 12px; }
+  #btn-list { padding: 6px 10px; }
+  /* finger-sized targets */
+  .maplibregl-ctrl-group button { width: 40px !important; height: 40px !important; }
+  .icon-btn { width: 36px; height: 36px; }
+  .chip { min-height: 34px; }
+  #layers .row { min-height: 36px; display: flex; align-items: center; gap: 6px; }
+  #legend-box summary { min-height: 30px; display: flex; align-items: center; }
+  /* iOS zooms the page into inputs smaller than 16px */
+  input, select { font-size: 16px !important; }
+  /* fullscreen is not available for elements on iPhone */
+  .maplibregl-ctrl-group:has(.maplibregl-ctrl-fullscreen) { display: none; }
+  /* sheets measured against the visible viewport (in-app browser toolbars) */
+  #drawer, #layers { max-height: 62dvh; }
+  #drawer { height: 62dvh; top: auto; width: auto; }
+  #info { max-height: 50dvh; right: 8px; }
+  #layers { right: 8px; }
+  #legend-box { top: calc(var(--topcard-bottom, 200px) + 8px); }
+  .tl-name { display: none; }
+  .tl-title { display: inline; font-size: 11.5px; }
+  .tl-filters { -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); padding-right: 24px; }
+}
+
+#legend-box { max-width: 270px; }
+#legend .lg-row { line-height: 1.3; }
+
+.search-row { display: flex; gap: 6px; }
+.search-row #f-search { flex: 1; min-width: 0; }
+.search-row #btn-list { width: auto; white-space: nowrap; flex: none; }
+.sub-short { display: none; }
+
+@media (max-width: 700px) {
+  #topcard { right: 8px; }
+  .sub-long { display: none; }
+  .sub-short { display: inline; }
+  /* map buttons start below the top card; pinch replaces +/−, and auto-rotate is a desktop thing */
+  .maplibregl-ctrl-top-right { top: calc(var(--topcard-bottom, 200px) + 2px); }
+  .maplibregl-ctrl-group:has(.maplibregl-ctrl-zoom-in), .ctrl-orbit { display: none; }
+  #legend-box { top: calc(var(--topcard-bottom, 200px) + 8px); }
+  /* timeline: drag sets the years; the boxes and reset only appear once years are picked */
+  .yr input, .yr > span { display: none; }
+  #f-yreset { display: none; }
+  #timeline.years-filtered #f-yreset { display: inline; }
+  .tl-head { min-height: 18px; }
+}

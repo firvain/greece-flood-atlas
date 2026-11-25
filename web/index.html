@@ -21,25 +21,34 @@
 <body>
   <div id="map"></div>
 
-  <!-- top-left: title, search, headline numbers -->
+  <!-- top-left: the story first, then search and browse -->
   <section id="topcard" class="card">
     <div class="title-row">
-      <h1>Greece Flood Atlas</h1>
-      <button id="btn-about" class="icon-btn" type="button" aria-label="About this map" title="About this map">?</button>
+      <button id="btn-home" class="kicker" type="button" title="Show all of Greece">Greece Flood Atlas</button>
+      <button id="btn-about" class="icon-btn" type="button" aria-label="About this map and its sources" title="About this map and its sources">?</button>
     </div>
-    <input id="f-search" type="search" placeholder="Search a place, river or storm" autocomplete="off" aria-label="Search floods">
-    <div class="stats-line">
-      <span><b id="st-events">–</b> major floods</span>
-      <span><b id="st-fatal">–</b> deaths</span>
-      <span id="st-years" class="muted"></span>
+    <p class="headline"><b id="hl-deaths" class="hl-num">576</b> people killed by <b id="hl-floods">121</b> major floods in Greece since <span id="hl-since">1887</span></p>
+    <p class="sub"><span class="sub-long">Each orange mark is a flood: bigger means more deaths. Tap one to see what happened.</span><span class="sub-short">Bigger mark = more deaths. Tap one to see what happened.</span></p>
+    <div id="stories" class="stories" aria-label="Start here">
+      <button type="button" data-story="daniel">Storm Daniel, 2023</button>
+      <button type="button" data-story="deadliest">Deadliest floods</button>
+      <button type="button" data-story="athens">Athens</button>
+      <button type="button" data-story="since2000">Since 2000</button>
     </div>
-    <button id="btn-list" class="wide-btn" type="button" aria-expanded="false" aria-controls="drawer">☰ List of floods</button>
+    <div id="filter-status" class="filter-status" hidden>
+      <span id="fs-text"></span>
+      <button id="fs-clear" class="link" type="button">Clear filters</button>
+    </div>
+    <div class="search-row">
+  <input id="f-search" type="search" placeholder="Search a town, river or storm…" title="e.g. Volos, Pinios, Daniel" autocomplete="off" aria-label="Search floods">
+      <button id="btn-list" class="wide-btn" type="button" aria-expanded="false" aria-controls="drawer" title="Browse all major floods">☰ All floods</button>
+    </div>
   </section>
 
   <!-- slide-out list of floods -->
   <aside id="drawer" class="card" hidden aria-label="List of floods">
     <div class="drawer-head">
-      <h2>Floods <span id="list-count" class="muted"></span></h2>
+      <h2>Major floods <span id="list-count" class="muted"></span></h2>
       <select id="sort" aria-label="Sort floods">
         <option value="date">Newest first</option>
         <option value="fatal">Most deaths</option>
@@ -68,8 +77,8 @@
         <option value="fatal">deaths</option>
       </select>
     </label>
-    <label class="row"><input type="checkbox" id="l-local" checked> Local flood reports, 2012–2018 (zoom in) <span id="local-count" class="muted"></span></label>
-    <label class="row"><input type="checkbox" id="l-ems"> Land under water, seen by satellite</label>
+    <label class="row"><input type="checkbox" id="l-local" checked> Village flood reports, 2012–2018 <span id="local-count" class="muted"></span></label>
+    <label class="row"><input type="checkbox" id="l-ems"> Satellite flood maps, 2015–2026 (all)</label>
     <div id="wms-list"></div>
   </section>
 
@@ -78,32 +87,35 @@
 
   <!-- legend (collapsible) -->
   <details id="legend-box" class="card" open>
-    <summary>Legend</summary>
+    <summary>What the map shows</summary>
     <div id="legend"></div>
   </details>
 
   <!-- bottom: timeline + quick filters -->
   <section id="timeline" class="card" aria-label="Timeline and filters">
     <div class="tl-head">
-      <span class="tl-title">Floods per year</span>
+      <span class="tl-title"><span class="tl-name">Major floods per year</span> <span class="tl-hint">drag across the bars to pick years</span></span>
       <span class="yr">
         <input id="f-ymin" type="number" inputmode="numeric" aria-label="From year">
         <span>–</span>
         <input id="f-ymax" type="number" inputmode="numeric" aria-label="To year">
-        <button id="f-yreset" class="link" type="button">all years</button>
+        <button id="f-yreset" class="link" type="button">Show all years</button>
       </span>
     </div>
     <svg id="tl-svg" preserveAspectRatio="none" role="img" aria-label="Bar chart of floods per year. Drag to pick years, double-click to reset."></svg>
     <div class="tl-filters">
+      <span class="tl-show">Show:</span>
       <div id="f-types" class="chips" aria-label="Type of flood"></div>
-      <label class="chip toggle"><input type="checkbox" id="f-deadly"> Only floods with deaths</label>
+      <label class="chip toggle"><input type="checkbox" id="f-deadly"> Deadly floods only</label>
     </div>
   </section>
 
   <div id="toast" hidden></div>
+  <div id="tip" hidden role="tooltip"></div>
 
   <dialog id="about">
     <h2>About this map</h2>
+    <p>Floods are Greece's deadliest weather hazard. This map shows where they struck, who they killed and what they cost.</p>
     <p><b>Major floods (1887–2025)</b> come from the
       <a href="https://zenodo.org/records/17226475/latest" target="_blank" rel="noopener">HANZE database</a> of European floods (Paprotny et al.).
       It lists only significant floods with recorded deaths, damage or people affected. Each one is drawn in the middle of the areas it hit, not at the exact town.</p>
@@ -111,6 +123,13 @@
     <p><b>Satellite flood maps</b> show land seen under water by the EU's
       <a href="https://rapidmapping.emergency.copernicus.eu/" target="_blank" rel="noopener">Copernicus Emergency Management Service</a>.</p>
     <p><b>Official flood zones</b> are the Ministry's flood hazard and risk maps under the EU Floods Directive, plus Copernicus European flood models.</p>
+    <h3>Read with care</h3>
+    <ul class="src-list">
+      <li>Older floods are under-recorded, so the rise in recorded floods since 2000 partly reflects better reporting, not only more floods.</li>
+      <li>Damage is known for only 25 of the 121 major floods. Deaths are deaths in Greece only (e.g. not Storm Daniel's victims in Libya).</li>
+      <li>Each major flood is drawn in the middle of the areas it hit, not at the exact town. A flood that hit two areas counts in both.</li>
+      <li>Village reports (2012–2018) depend on how each region reported. HANZE v3.0.2 is a beta release.</li>
+    </ul>
     <h3>Sources and licences</h3>
     <ul class="src-list">
       <li>Major floods: Paprotny, D. (2026) <i>HANZE database of historical flood impacts in Europe, 1870–2025</i>, v3.0.2 beta.

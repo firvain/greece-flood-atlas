@@ -137,11 +137,36 @@ def storm_name(*texts: str | None) -> str | None:
     return None
 
 
-def event_title(type_: str | None, codes: list[str], storm: str | None) -> str:
-    place = place_label(codes)
+# NUTS2 regions ("periphery") — the scale people use to name big storms ("Storm Daniel hit Thessaly")
+NUTS2_NAMES = {
+    "EL30": "Attica", "EL41": "North Aegean", "EL42": "South Aegean", "EL43": "Crete",
+    "EL51": "Eastern Macedonia & Thrace", "EL52": "Central Macedonia", "EL53": "Western Macedonia",
+    "EL54": "Epirus", "EL61": "Thessaly", "EL62": "Ionian Islands", "EL63": "Western Greece",
+    "EL64": "Central Greece", "EL65": "Peloponnese",
+}
+
+# floods the public knows by a name that the database's area coding doesn't convey
+# (HANZE codes Mandra 2017 to West Attica + Dodecanese because the same storm also hit the islands)
+KNOWN_NAMES = {
+    2135: "Mandra flash flood, West Attica",
+}
+
+
+def main_region(codes: list[str]) -> str:
+    """Region (NUTS2) with the most affected areas; ties go to the first listed."""
+    counts: dict[str, int] = {}
+    for c in codes:
+        counts[c[:4]] = counts.get(c[:4], 0) + 1
+    best = max(counts, key=lambda k: (counts[k], -list(counts).index(k))) if counts else ""
+    return NUTS2_NAMES.get(best, "Greece")
+
+
+def event_title(type_: str | None, codes: list[str], storm: str | None, hanze_id: int | None = None) -> str:
+    if hanze_id in KNOWN_NAMES:
+        return KNOWN_NAMES[hanze_id]
     if storm:
-        return f"{storm}: {place}"
-    return f"{TYPE_LABEL.get(type_ or '', 'Flood')} in {place}"
+        return f"{storm}, {main_region(codes)}"
+    return f"{TYPE_LABEL.get(type_ or '', 'Flood')} in {place_label(codes)}"
 
 
 def clean_note(text: str | None) -> str | None:

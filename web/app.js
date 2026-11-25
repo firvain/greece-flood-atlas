@@ -10,8 +10,9 @@
   const RAMP = ['#e3edf9', '#b3cdeb', '#7aa6d8', '#3f78c0', '#16457f'];
   // One colour per kind of thing on the map (kept deliberately few):
   const FLOOD_COLOR = '#e8590c';                       // major floods (size / height = deaths)
-  const LOCAL_COLOR = dark ? '#adb5bd' : '#495057';    // local flood reports (small dots, zoomed in)
-  const EMS_COLOR = '#0c8599';                         // land under water seen by satellite
+  const LOCAL_COLOR = dark ? '#b197fc' : '#6741d9';    // village flood reports (dots, zoomed in) — not map-label grey
+  const EMS_COLOR = '#0c8599';                         // land under water seen by satellite (first map)
+  const EMS_LATER_COLOR = '#66d9e8';                   // follow-up map: land still under water weeks later
   // Official overlay maps (ids from data/wms_layers.json) with names a non-specialist understands.
   // Layers not listed here are not shown.
   const OVERLAYS = [
@@ -139,10 +140,12 @@
   }
   // data downloads start now, in parallel with the basemap request (they don't depend on it)
   const getJSON = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error(`${u}: ${r.status}`); return r.json(); });
-  const dataP = Promise.allSettled([
-    getJSON('data/events.geojson'), getJSON('data/regions.geojson'),
-    getJSON('data/ems_index.json'), getJSON('data/wms_layers.json'), getJSON('data/local_floods.geojson'),
-  ]);
+  const settle = (pr) => pr.then((value) => ({ status: 'fulfilled', value }), (reason) => ({ status: 'rejected', reason }));
+  const evP = settle(getJSON('data/events.geojson'));
+  const emsP = settle(getJSON('data/ems_index.json'));
+  const wmsP = settle(getJSON('data/wms_layers.json'));
+  const rgP = settle(getJSON('data/regions.geojson'));        // 330 KB, only needed for area shading
+  const localP = settle(getJSON('data/local_floods.geojson')); // 740 KB, only shown zoomed in
   const { style, labelsFrom } = await loadBaseStyle();
 
   // read before the map is created: with hash:true the map writes its own camera into the URL right away
@@ -190,7 +193,7 @@
       this._btn = document.createElement('button');
       this._btn.type = 'button';
       this._btn.title = 'Toggle 3D terrain & extrusions';
-      this._btn.style.cssText = 'font-weight:700;font-size:12px;width:auto;padding:0 8px';
+      this._btn.className = 'ctrl-text';
       this._btn.textContent = '3D';
       this._btn.onclick = () => set3D(!state.is3d);
       this._el.appendChild(this._btn);
@@ -199,8 +202,25 @@
     }
     onRemove() { this._el.remove(); }
     // map controls stay white in dark mode, so the text colour must not inherit the page's light ink
-    sync() { this._btn.style.color = state.is3d ? '#1f6feb' : '#333'; this._btn.setAttribute('aria-pressed', state.is3d); }
+    sync() {
+      this._btn.classList.toggle('ctrl-on', state.is3d);
+      this._btn.title = state.is3d ? '3D view is on: mountains and columns. Click for flat map.' : '3D view: mountains and columns';
+      this._btn.setAttribute('aria-pressed', String(state.is3d));
+    }
   }
+  class HomeControl {
+    onAdd() {
+      this._el = document.createElement('div');
+      this._el.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = '⌂'; b.title = 'Show all of Greece'; b.setAttribute('aria-label', 'Show all of Greece');
+      b.className = 'ctrl-home'; b.onclick = () => goHome();
+      this._el.appendChild(b);
+      return this._el;
+    }
+    onRemove() { this._el.remove(); }
+  }
+  map.addControl(new HomeControl(), 'top-right');
   const threeD = new ThreeDControl();
   map.addControl(threeD, 'top-right');
 
@@ -230,10 +250,9 @@
   class OrbitControl {
     onAdd() {
       this._el = document.createElement('div');
-      this._el.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+      this._el.className = 'maplibregl-ctrl maplibregl-ctrl-group ctrl-orbit';
       this._btn = document.createElement('button');
       this._btn.type = 'button';
-      this._btn.style.cssText = 'font-size:15px;line-height:1';
       this._btn.onclick = () => (orbit.on ? orbit.stop() : orbit.start());
       this._el.appendChild(this._btn);
       this.sync();
@@ -242,8 +261,9 @@
     onRemove() { this._el.remove(); }
     sync() {
       if (!this._btn) return;
-      this._btn.textContent = orbit.on ? '⏸' : '⟳';
-      this._btn.style.color = orbit.on ? '#1f6feb' : '#333';
+      this._btn.textContent = orbit.on ? '⏸ Pause' : '⟳ Rotate';
+      this._btn.classList.add('ctrl-text');
+      this._btn.classList.toggle('ctrl-on', orbit.on);
       this._btn.title = orbit.on ? 'Stop rotating' : 'Rotate the map slowly';
       this._btn.setAttribute('aria-label', this._btn.title);
       this._btn.setAttribute('aria-pressed', String(orbit.on));
@@ -261,15 +281,38 @@
   const ready = new Promise((res) => map.on('load', res));
   // credits start folded into the "i" button: expanded they wrap behind the timeline (full list is in About)
   map.on('load', () => document.querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show'));
-  Promise.all([dataP, ready]).then(([[ev, rg, ems, wms, local]]) => {
-    if (local.status === 'fulfilled') state.local = local.value.features;
+  // panels below the top card follow its real height (it grows with the headline and wraps on small screens)
+  new ResizeObserver(() => document.documentElement.style.setProperty('--topcard-bottom', `${Math.round($('#topcard').getBoundingClientRect().bottom)}px`)).observe($('#topcard'));
+  Promise.all([evP, emsP, wmsP, ready]).then(([ev, ems, wms]) => {
     if (ev.status === 'fulfilled') state.events = ev.value.features;
     else toast('Could not load the flood records. Please try reloading the page.');
-    if (rg.status === 'fulfilled') state.regions = rg.value;
     if (ems.status === 'fulfilled') state.ems = ems.value;
     if (wms.status === 'fulfilled') state.wms = (wms.value || []).filter((l) => l.verified);
     init();
+    // the larger files arrive later and slot in
+    rgP.then((rg) => { if (rg.status === 'fulfilled') addRegions(rg.value); });
+    localP.then((local) => { if (local.status === 'fulfilled') addLocal(local.value.features); });
   });
+  function addRegions(fcRegions) {
+    state.regions = fcRegions;
+    for (const r of fcRegions.features) state.regionBounds.set(r.properties.region_id, bboxOf(r.geometry));
+    map.getSource('regions').setData(fcRegions);
+    $('#l-regions').closest('label').hidden = false;
+    updateRegions();
+    if (state.selectedId) highlight(state.byId.get(state.selectedId)); // outline the selected flood's areas now
+    renderLegend();
+  }
+  function addLocal(features) {
+    state.local = features;
+    for (const f of features) {
+      const p = f.properties;
+      localById.set(p.id, f);
+      p._search = norm([p.place, p.place_en, p.basin, p.date].join(' '));
+    }
+    map.getSource('local').setData(fc(features));
+    $('#l-local').closest('label').hidden = false;
+    applyFilters();
+  }
 
   function init() {
     // normalise
@@ -282,18 +325,16 @@
       state.byId.set(p.id, f);
       state.types.add(p.type);
     }
-    for (const f of state.local) {
-      const p = f.properties;
-      p._search = norm([p.place, p.place_en, p.basin, p.date].join(' '));
-    }
     const ys = state.events.map((f) => f.properties.year).filter(Number.isFinite);
     state.years = ys.length ? [Math.min(...ys), Math.max(...ys)] : [1900, 2025];
     state.f.ymin = state.years[0]; state.f.ymax = state.years[1];
     state.f.types = new Set(state.types);
-    if (state.regions) {
-      for (const r of state.regions.features) state.regionBounds.set(r.properties.region_id, bboxOf(r.geometry));
-    }
 
+    const allDeaths = state.events.reduce((a, f) => a + (f.properties.fatalities || 0), 0);
+    $('#hl-deaths').textContent = nf.format(allDeaths);
+    $('#hl-floods').textContent = nf.format(state.events.length);
+    $('#hl-since').textContent = state.years[0];
+    document.body.classList.add('ready');
     addLayers();
     buildUI();
     // controls may have been used while the data was loading: start from what they show now
@@ -308,9 +349,13 @@
 
     // open in 3D. A shared link (#zoom/lat/lon/bearing/pitch) keeps its camera; a flat shared view stays flat.
     if (!sharedView && !userMoved) {
-      set3D(true, { camera: false });
-      map.jumpTo(isPhone() ? { center: [23.9, 38.3], zoom: 5.3, pitch: 50, bearing: -12 } : { center: [23.4, 38.5], zoom: 6.35, pitch: 55, bearing: -12 });
-      if (!reduceMotion) orbit.start();
+      if (isPhone()) {
+        goHome({ animate: false }); // flat: readable on a small screen, and no terrain download on mobile data
+      } else {
+        set3D(true, { camera: false });
+        goHome({ animate: false });
+        if (!reduceMotion) orbit.start();
+      }
     } else if (map.getPitch() > 0 && !state.is3d) {
       set3D(true, { camera: false });
     }
@@ -328,8 +373,8 @@
       });
     }
 
-    if (state.regions) {
-      map.addSource('regions', { type: 'geojson', data: state.regions, promoteId: 'region_id' });
+    {
+      map.addSource('regions', { type: 'geojson', data: fc([]), promoteId: 'region_id' });
       const vExpr = ['coalesce', ['feature-state', 'v'], 0];
       map.addLayer({
         id: 'regions-fill', type: 'fill', source: 'regions',
@@ -356,9 +401,9 @@
     map.addLayer({
       id: 'local-pts', type: 'circle', source: 'local', minzoom: 7,
       paint: {
-        'circle-radius': ['interpolate', ['linear'], ['zoom'], 7, 2, 12, 5],
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 7, 2.5, 10, 5, 13, 7],
         'circle-color': LOCAL_COLOR,
-        'circle-opacity': 0.8,
+        'circle-opacity': 0.9,
         'circle-stroke-color': dark ? '#0f141a' : '#ffffff',
         'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 7, 0, 10, 1],
       },
@@ -366,8 +411,9 @@
 
     // EMS extents (filled lazily)
     map.addSource('ems-ext', { type: 'geojson', data: fc([]) });
-    map.addLayer({ id: 'ems-ext-fill', type: 'fill', source: 'ems-ext', paint: { 'fill-color': EMS_COLOR, 'fill-opacity': 0.55 } });
-    map.addLayer({ id: 'ems-ext-line', type: 'line', source: 'ems-ext', paint: { 'line-color': EMS_COLOR, 'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.3, 12, 1.2] } });
+    const emsColor = ['case', ['==', ['slice', ['get', 'ems_code'], 0, 4], 'EMSN'], EMS_LATER_COLOR, EMS_COLOR];
+    map.addLayer({ id: 'ems-ext-fill', type: 'fill', source: 'ems-ext', paint: { 'fill-color': emsColor, 'fill-opacity': 0.6 } });
+    map.addLayer({ id: 'ems-ext-line', type: 'line', source: 'ems-ext', paint: { 'line-color': emsColor, 'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.3, 12, 1.2] } });
 
     // events: 2D circles + 3D columns
     map.addSource('events', { type: 'geojson', data: fc(state.events) });
@@ -402,7 +448,9 @@
       paint: { 'circle-radius': 20, 'circle-color': 'transparent', 'circle-stroke-color': dark ? '#ffd43b' : '#1b2430', 'circle-stroke-width': 2.5 },
     });
 
-    // place names sit above area shading / heat map / official overlays, but below flood markers
+    // village dots above satellite areas (so they stay tappable inside a flooded area)
+    map.moveLayer('local-pts', 'event-cols');
+    // place names sit above area shading / satellite areas / official overlays, but below all markers
     for (const id of baseLabelIds) if (map.getLayer(id)) map.moveLayer(id, 'local-pts');
 
     // interactions
@@ -413,25 +461,49 @@
     map.on('click', (e) => {
       const z = map.getZoom();
       // some layers fade to opacity 0 instead of hiding; MapLibre still returns them, so skip the invisible ones
-      const invisible = (id) => (id === 'event-cols' && z >= 8.2) || (id === 'events' && state.is3d && z < 7.9)
-;
-      const hits = map.queryRenderedFeatures(e.point, { layers: ['events', 'event-cols', 'ems-ext-fill', 'local-pts', 'regions-fill'].filter(visible) })
+      const invisible = (id) => (id === 'event-cols' && z >= 8.2) || (id === 'events' && state.is3d && z < 7.9);
+      const layers = ['events', 'event-cols', 'local-pts', 'ems-ext-fill', 'regions-fill'].filter(visible);
+      // points are small: search a box around the tap (bigger for fingers) and take the nearest point
+      const r = e.originalEvent?.pointerType === 'touch' || isPhone() ? 14 : 6;
+      const box = [[e.point.x - r, e.point.y - r], [e.point.x + r, e.point.y + r]];
+      const near = (f) => { const c = pointCoords(f); if (!c) return Infinity; const q = map.project(c); return Math.hypot(q.x - e.point.x, q.y - e.point.y); };
+      const pts = map.queryRenderedFeatures(box, { layers: layers.filter((l) => l === 'events' || l === 'event-cols' || l === 'local-pts') })
         .filter((h) => !invisible(h.layer.id));
-      if (!hits.length) return;
-      const h = hits[0];
-      if (h.layer.id === 'events' || h.layer.id === 'event-cols') {
-        // several stacked events at the same centroid → show a picker
-        const ids = [...new Set(hits.filter((x) => x.layer.id === h.layer.id).map((x) => x.properties.id))];
-        if (ids.length > 1) return popupMulti(ids, e.lngLat);
-        return selectEvent(h.properties.id, { fly: false, at: e.lngLat });
+      const flood = pts.filter((h) => h.layer.id !== 'local-pts').sort((a, b) => near(a) - near(b))[0];
+      if (flood) {
+        const id = flood.properties.id;
+        const c = state.byId.get(id)?.geometry.coordinates;
+        // several floods drawn at the same spot → let the user pick
+        const ids = [...new Set(pts.filter((x) => x.layer.id !== 'local-pts').map((x) => x.properties.id))]
+          .filter((x) => { const d = state.byId.get(x)?.geometry.coordinates; return d && c && d[0] === c[0] && d[1] === c[1]; });
+        if (ids.length > 1) return popupMulti(ids, c);
+        return selectEvent(id, { fly: false });
       }
-      if (h.layer.id === 'local-pts') {
-        const same = hits.filter((x) => x.layer.id === 'local-pts').map((x) => x.properties.id);
-        return popupLocal([...new Set(same)], e.lngLat);
+      const local = pts.filter((h) => h.layer.id === 'local-pts').sort((a, b) => near(a) - near(b))[0];
+      if (local) {
+        const at = localById.get(local.properties.id)?.geometry.coordinates;
+        const same = pts.filter((x) => x.layer.id === 'local-pts').map((x) => localById.get(x.properties.id))
+          .filter((f) => f && at && f.geometry.coordinates[0] === at[0] && f.geometry.coordinates[1] === at[1])
+          .map((f) => f.properties.id);
+        return popupLocal([...new Set(same)], at);
       }
-      if (h.layer.id === 'ems-ext-fill') return popupExtent(h.properties, e.lngLat);
-      return popupRegion(h.properties.region_id, e.lngLat);
+      const area = map.queryRenderedFeatures(e.point, { layers: layers.filter((l) => l === 'ems-ext-fill' || l === 'regions-fill') })[0];
+      if (area?.layer.id === 'ems-ext-fill') return popupExtent(area.properties); // areas: no ring
+      if (area) return popupRegion(area.properties.region_id);
+      closePopup(); // clicked empty map: clear the selection
     });
+    // desktop hover: name, year and deaths of a flood without clicking
+    const tip = $('#tip');
+    for (const id of ['events', 'event-cols']) {
+      map.on('mousemove', id, (e) => {
+        const f = e.features?.[0]; if (!f || (id === 'event-cols' && map.getZoom() >= 8.2) || (id === 'events' && state.is3d && map.getZoom() < 7.9)) return;
+        const p = state.byId.get(f.properties.id)?.properties; if (!p) return;
+        tip.textContent = `${p.name} · ${p.year} · ${p.fatalities ? plural(p.fatalities, 'death') : 'no deaths recorded'}`;
+        tip.style.left = `${e.point.x + 14}px`; tip.style.top = `${e.point.y + 14}px`; tip.hidden = false;
+      });
+      map.on('mouseleave', id, () => { tip.hidden = true; });
+    }
+    map.on('movestart', () => { tip.hidden = true; });
   }
 
   // ---------- UI ----------
@@ -455,18 +527,37 @@
       if (a > b) [a, b] = [b, a];
       state.f.ymin = a; state.f.ymax = b; applyFilters();
     };
-    $('#f-ymin').addEventListener('change', onYears);
-    $('#f-ymax').addEventListener('change', onYears);
+    let yt;
+    for (const el of [$('#f-ymin'), $('#f-ymax')]) {
+      el.addEventListener('change', onYears);
+      el.addEventListener('input', () => { clearTimeout(yt); yt = setTimeout(() => { if (String(el.value).length === 4) onYears(); }, 400); });
+    }
     $('#f-yreset').addEventListener('click', () => setYears(y0, y1));
 
-    let t;
+    let t, ft;
     $('#f-search').addEventListener('input', (e) => {
-      clearTimeout(t);
+      clearTimeout(t); clearTimeout(ft);
+      orbit.stop();
       t = setTimeout(() => {
         state.f.q = norm(e.target.value.trim());
         applyFilters();
-        if (state.f.q) openDrawer(true); // searching shows the matching floods
+        if (state.f.q && !isPhone()) openDrawer(true); // searching shows the matching floods
+        ft = setTimeout(flyToResults, 450);           // and, once typing pauses, moves the map to them
       }, 150);
+    });
+    $('#f-search').addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      // open the flood whose own name matches (e.g. "Mandra"), or the only result
+      const byName = state.filtered.filter((f) => norm(f.properties.name).includes(state.f.q));
+      const pick = state.filtered.length === 1 ? state.filtered[0] : byName.length === 1 ? byName[0] : null;
+      if (pick && state.f.q) selectEvent(pick.properties.id, { fly: true });
+      else { flyToResults(); if (state.f.q) openDrawer(true); }
+    });
+    $('#fs-clear').addEventListener('click', () => { clearFilters(); goHome(); });
+    $('#btn-home').addEventListener('click', () => goHome());
+    $('#stories').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-story]'); if (b) story(b.dataset.story);
     });
     $('#f-deadly').addEventListener('change', (e) => { state.f.fatal = e.target.checked ? 1 : 0; applyFilters(); });
     $('#sort').addEventListener('change', (e) => { state.sort = e.target.value; renderList(); });
@@ -475,11 +566,12 @@
     $('#l-events').addEventListener('change', syncLayerVis);
     $('#l-regions').addEventListener('change', () => { syncLayerVis(); renderLegend(); });
     $('#l-local').addEventListener('change', (e) => { vis(['local-pts'], e.target.checked); renderLegend(); });
-    if (!state.local.length) $('#l-local').closest('label').hidden = true;
+    $('#l-local').closest('label').hidden = true;   // shown when the file arrives (addLocal)
     // "Land under water, seen by satellite": all flooded areas at once (single floods can also be opened from a popup)
     $('#l-ems').addEventListener('change', async (e) => {
       emsGen++;
-      if (!e.target.checked) { state.emsLoaded.clear(); refreshExtents(); renderLegend(); return; }
+      state.emsAll = e.target.checked;
+      if (!e.target.checked) { state.emsLoaded.clear(); refreshExtents(); renderLegend(); syncEmsButtons(); return; }
       const msg = `Loading ${state.ems.length} satellite flood maps…`;
       toast(msg);
       await Promise.all(state.ems.map((a) => loadExtent(a.code, false)));
@@ -510,7 +602,7 @@
     if (matchMedia('(max-width: 700px)').matches) $('#legend-box').open = false;
 
     if (!state.ems.length) $('#l-ems').closest('label').hidden = true;
-    if (!state.regions) $('#l-regions').closest('label').hidden = true;
+    $('#l-regions').closest('label').hidden = true; // shown when the file arrives (addRegions)
 
     const have = new Set(state.wms.map((l) => l.id));
     $('#wms-list').innerHTML = OVERLAYS.map((g) => {
@@ -542,6 +634,7 @@
 
   function set3D(on, { camera = true } = {}) {
     state.is3d = on;
+    if (isPhone()) on ? map.touchPitch.enable() : map.touchPitch.disable();
     if (on) {
       map.setTerrain({ source: 'dem-3d', exaggeration: 1.6 });
       if (camera) map.easeTo({ pitch: 58, bearing: -18, duration: 1200 });
@@ -556,6 +649,26 @@
   }
 
   // ---------- filtering ----------
+  function filtersActive() {
+    const f = state.f;
+    return !!(f.q || f.fatal || f.ymin !== state.years[0] || f.ymax !== state.years[1] || f.types.size !== state.types.size);
+  }
+  function passesExcept(p, skip) {
+    const f = state.f;
+    if (skip !== 'type' && !f.types.has(p.type)) return false;
+    if ((p.fatalities || 0) < f.fatal) return false;
+    if (p.year < f.ymin || p.year > f.ymax) return false;
+    if (f.q && !p._search.includes(f.q)) return false;
+    return true;
+  }
+  function clearFilters() {
+    state.f.q = ''; $('#f-search').value = '';
+    state.f.fatal = 0; $('#f-deadly').checked = false;
+    state.f.ymin = state.years[0]; state.f.ymax = state.years[1];
+    state.f.types = new Set(state.types);
+    document.querySelectorAll('#f-types .chip').forEach((b) => b.setAttribute('aria-pressed', 'true'));
+    applyFilters();
+  }
   function passes(p, ignoreYears = false) {
     const f = state.f;
     if (!f.types.has(p.type)) return false;
@@ -584,10 +697,23 @@
 
     if (state.selectedId && !state.filtered.some((f) => f.properties.id === state.selectedId)) { closePopup(); }
     const fatal = state.filtered.reduce((s, f) => s + (f.properties.fatalities || 0), 0);
-    $('#st-events').textContent = nf.format(state.filtered.length);
-    $('#st-fatal').textContent = nf.format(fatal);
-    $('#st-years').textContent = state.events.length ? `${state.f.ymin}–${state.f.ymax}` : '';
-    $('#f-ymin').value = state.f.ymin; $('#f-ymax').value = state.f.ymax;
+    // headline = the whole story; this line says what the filters currently show
+    const active = filtersActive();
+    $('#filter-status').hidden = !active;
+    if (active) {
+      const parts = [`${plural(state.filtered.length, 'major flood')} (${plural(fatal, 'death')})`];
+      if (state.local.length && f.fatal === 0) parts.push(plural(localIds.length, 'village report'));
+      $('#fs-text').textContent = `Showing ${parts.join(' · ')}${state.f.ymin !== state.years[0] || state.f.ymax !== state.years[1] ? `, ${state.f.ymin}–${state.f.ymax}` : ''}`;
+    }
+    $('#timeline').classList.toggle('years-filtered', state.f.ymin !== state.years[0] || state.f.ymax !== state.years[1]);
+    if (document.activeElement !== $('#f-ymin')) $('#f-ymin').value = state.f.ymin;
+    if (document.activeElement !== $('#f-ymax')) $('#f-ymax').value = state.f.ymax;
+    // type buttons count what the other filters leave
+    document.querySelectorAll('#f-types .chip').forEach((b) => {
+      const t = b.dataset.t;
+      const n = state.events.filter((x) => x.properties.type === t && passesExcept(x.properties, 'type')).length;
+      b.querySelector('.muted').textContent = n;
+    });
 
     updateRegions();
     renderList();
@@ -615,6 +741,39 @@
     }
   }
 
+  // move the map to what the search found (major floods + village reports)
+  function flyToResults() {
+    if (!state.f.q || state.f.q.length < 3) return;
+    const pts = state.filtered.map((f) => f.geometry.coordinates);
+    for (const f of state.local) if (f.properties._search.includes(state.f.q) && passesLocalYears(f.properties)) pts.push(f.geometry.coordinates);
+    if (!pts.length || pts.length > 80) return;
+    const bb = [[Math.min(...pts.map((c) => c[0])), Math.min(...pts.map((c) => c[1]))], [Math.max(...pts.map((c) => c[0])), Math.max(...pts.map((c) => c[1]))]];
+    map.fitBounds(bb, { padding: mapPadding(), maxZoom: 10.5, duration: 900, pitch: state.is3d ? 50 : 0 });
+  }
+  const passesLocalYears = (p) => p.year == null || (p.year >= state.f.ymin && p.year <= state.f.ymax);
+  // "Start here" buttons: each tells one part of the story
+  function story(name) {
+    orbit.stop();
+    if (name !== 'since2000') clearFilters();
+    if (name === 'daniel') {
+      const ev = state.events.find((f) => f.properties.storm === 'Storm Daniel');
+      if (!ev) return;
+      selectEvent(ev.properties.id, { fly: true });
+      const a = relatedEms(ev.properties).find((x) => !isFollowUp(x));
+      if (a) loadExtent(a.code, false).then(() => syncEmsButtons());
+    } else if (name === 'deadliest') {
+      state.sort = 'fatal'; $('#sort').value = 'fatal'; renderList();
+      if (!isPhone()) openDrawer(true);
+      const top = [...state.events].sort((a, b) => (b.properties.fatalities || 0) - (a.properties.fatalities || 0))[0];
+      if (top) selectEvent(top.properties.id, { fly: true });
+    } else if (name === 'athens') {
+      closePopup();
+      if (!$('#l-local').checked) $('#l-local').click();
+      map.fitBounds([[23.45, 37.85], [24.05, 38.2]], { padding: mapPadding(), pitch: state.is3d ? 45 : 0, duration: 1000 });
+    } else if (name === 'since2000') {
+      clearFilters(); setYears(2000, state.years[1]); goHome();
+    }
+  }
   function setYears(a, b) { state.f.ymin = a; state.f.ymax = b; applyFilters(); }
 
   // ---------- list ----------
@@ -625,7 +784,7 @@
       const x = key(a.properties), y = key(b.properties);
       return x < y ? 1 : x > y ? -1 : 0;
     });
-    $('#list-count').textContent = `(${arr.length})`;
+    $('#list-count').textContent = `(${nf.format(arr.length)})`;
     const LIM = 300;
     $('#list').innerHTML = arr.slice(0, LIM).map((f) => {
       const p = f.properties;
@@ -633,38 +792,49 @@
       return `<li data-id="${esc(p.id)}" tabindex="0"${p.id === state.selectedId ? ' class="active"' : ''}><i style="background:${typeColor(p.type)}"></i>
         <div><div class="t">${esc(shortName(p))}</div><div class="d">${esc(fmtDate(p.start_date))}${p.storm ? '' : ' · ' + esc(typeLabel(p.type))}</div></div>
         <div class="n">${right}</div></li>`;
-    }).join('') + (arr.length > LIM ? `<li class="more">${arr.length - LIM} more. Narrow the search to see them.</li>` : '')
-      + (arr.length ? '' : '<li class="more">No floods match these filters.</li>');
+    }).join('') + (arr.length > LIM ? `<li class="more">Showing ${LIM} of ${arr.length}. Search or pick years to narrow down.</li>` : '')
+      + (arr.length ? '' : '<li class="more">No major floods match. <button class="link" type="button" data-clear>Clear filters</button></li>');
   }
   $('#list').addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     const li = e.target.closest('li[data-id]'); if (li) { e.preventDefault(); li.click(); }
   });
   $('#list').addEventListener('click', (e) => {
+    if (e.target.closest('[data-clear]')) { clearFilters(); return; }
     const li = e.target.closest('li[data-id]'); if (!li) return;
     if (isPhone()) openDrawer(false);
     selectEvent(li.dataset.id, { fly: true });
   });
 
   // ---------- selection & popups ----------
+  const localById = new Map();
   // Details open in a card (right side on desktop, bottom sheet on phones), not a map popup: popups live inside
   // the map's stacking context and would sit under the floating cards. A small pin marks the clicked spot.
   const pinEl = document.createElement('div'); pinEl.className = 'pin';
   const pin = new maplibregl.Marker({ element: pinEl });
   let infoOpener = null;
+  // lngLat = the point to ring (a flood or village report); null for areas, which get no ring
   function openPopup(lngLat, html) {
     const info = $('#info');
     if (info.hidden) infoOpener = document.activeElement;
+    clearCardExtents();
     info.innerHTML = `<button class="icon-btn info-close" type="button" aria-label="Close details">×</button>${html}`;
     info.hidden = false; info.scrollTop = 0;
     openLayers(false);
     if (isPhone()) openDrawer(false);
-    pin.setLngLat(lngLat).addTo(map);
+    orbit.stop();
+    if (lngLat) pin.setLngLat(lngLat).addTo(map); else pin.remove();
   }
   function closePopup() {
+    pin.remove(); highlight(null); clearCardExtents();
     const info = $('#info'); if (info.hidden) return;
-    info.hidden = true; pin.remove(); highlight(null);
+    info.hidden = true;
     if (infoOpener && document.contains(infoOpener)) infoOpener.focus?.();
+  }
+  // satellite areas shown from a details card belong to that card (unless "all satellite maps" is switched on)
+  function clearCardExtents() {
+    if (state.emsAll || !state.emsLoaded.size) return;
+    emsGen++; state.emsLoaded.clear(); refreshExtents(); renderLegend();
   }
   $('#info').addEventListener('click', (e) => {
     if (e.target.closest('.info-close')) return closePopup();
@@ -674,7 +844,12 @@
   function onPopupClick(e) {
     const b = e.target.closest('[data-act]'); if (!b) return;
     const { act, arg } = b.dataset;
-    if (act === 'ems') loadExtent(arg, true);
+    if (act === 'ems') {
+      // toggle: show (and zoom to) this satellite map, or hide it again
+      if (state.emsLoaded.has(arg)) { state.emsLoaded.delete(arg); refreshExtents(); renderLegend(); }
+      else loadExtent(arg, true).then(() => syncEmsButtons());
+      syncEmsButtons();
+    }
     if (act === 'event') selectEvent(arg, { fly: true });
   }
 
@@ -707,49 +882,77 @@
     }
   }
 
+  // one plain sentence: "River flood on 4–7 Sep 2023 that killed 17 people and affected 5,260."
+  function summary(p) {
+    const what = p.storm ? `${p.storm} brought a ${typeLabel(p.type).toLowerCase()}` : `A ${typeLabel(p.type).toLowerCase()}`;
+    const harm = [p.fatalities ? `killed ${plural(p.fatalities, 'person').replace('persons', 'people')}` : 'killed no one on record',
+      p.persons_affected ? `affected ${nf.format(p.persons_affected)} ${p.persons_affected === 1 ? 'person' : 'people'}` : null].filter(Boolean);
+    const rain = cause(p.cause);
+    return `${what} on ${fmtRange(p)} that ${harm.join(' and ')}.${rain && /mm/.test(rain) ? ` ${rain}.` : ''}`;
+  }
+  // "Heavy rainfall up to 754 mm in 21 h" -> "Up to 754 mm of rain fell in 21 hours"
+  function cause(c) {
+    if (!c) return '';
+    const m = c.match(/up to ([\d.,]+) mm in ([\d.]+) ?(h|days?)/i);
+    if (m) return `Up to ${m[1]} mm of rain fell in ${m[2]} ${m[3].toLowerCase() === 'h' ? (m[2] === '1' ? 'hour' : 'hours') : m[3]}`;
+    return c;
+  }
   function eventHTML(p) {
     const rows = [
-      !p.storm ? null : ['Type', esc(typeLabel(p.type))],
+      p.storm && ['Type', esc(typeLabel(p.type))],
       ['Deaths', p.fatalities ? nf.format(p.fatalities) : 'None recorded'],
-      p.persons_affected != null && ['People affected', nf.format(p.persons_affected)],
-      p.area_inundated_km2 != null && ['Land flooded', `${nf.format(p.area_inundated_km2)} km²`],
-      p.losses_eur != null && ['Damage', `${euros(p.losses_eur)}${p.losses_note ? `<div class="muted">${esc(p.losses_note)}</div>` : ''}`],
-      p.cause && ['Cause', esc(p.cause)],
+      p.persons_affected != null && ['People affected', `${nf.format(p.persons_affected)}<div class="muted">evacuated, injured or left homeless</div>`],
+      p.area_inundated_km2 != null && ['Land under water', `${nf.format(p.area_inundated_km2)} km²`],
+      p.losses_eur != null && ['Damage', `${euros(p.losses_eur)} <span class="muted">(2025 prices)</span>`],
+      p.cause && ['Cause', esc(cause(p.cause))],
       (p.rivers || []).length && [p.rivers.length > 1 ? 'Rivers' : 'River', esc(p.rivers.join(', '))],
-      (p.region_names || []).length > 2 && ['Areas hit', esc(p.region_names.join(', '))],
+      (p.region_names || []).length && ['Areas hit', esc(p.region_names.join(', '))],
     ].filter(Boolean);
     const related = relatedEms(p);
     const sub = p.storm ? fmtRange(p) : `${typeLabel(p.type)} · ${fmtRange(p)}`;
     return `<div class="pp">
       <h3>${esc(p.name)}</h3>
       <div class="dt">${esc(sub)}</div>
+      <p class="summary">${esc(summary(p))}</p>
+      ${related.map((a) => {
+        const what = isFollowUp(a) ? 'land still under water weeks later' : 'flooded area seen by satellite';
+        const on = state.emsLoaded.has(a.code);
+        return `<button class="btn${isFollowUp(a) ? ' later' : ''}" data-act="ems" data-arg="${esc(a.code)}" data-what="${what}" aria-pressed="${on}">${on ? 'Hide' : 'Show'} ${what}</button>`;
+      }).join('')}
       <table>${rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('')}</table>
       ${p.notes ? `<div class="notes">${esc(p.notes)}</div>` : ''}
-      ${related.map((a) => `<button class="btn" data-act="ems" data-arg="${esc(a.code)}">${isFollowUp(a) ? 'Show land still flooded weeks later' : 'Show flooded area seen by satellite'}</button>`).join('')}
       ${p.references ? `<details><summary>Sources</summary><div>${linkify(p.references)}</div></details>` : ''}
-      <div class="src">Record ${esc(String(p.id).replace('HANZE-', ''))} in the ${esc(p.source || 'HANZE')} database</div>
+      <div class="src">Source: HANZE European flood database (record ${esc(String(p.id).replace('HANZE-', ''))})</div>
     </div>`;
   }
 
+
+  function syncEmsButtons() {
+    document.querySelectorAll('#info [data-act="ems"]').forEach((b) => {
+      const on = state.emsLoaded.has(b.dataset.arg);
+      b.textContent = (on ? 'Hide ' : 'Show ') + b.dataset.what;
+      b.setAttribute('aria-pressed', String(on));
+    });
+  }
   function popupMulti(ids, lngLat) {
     const items = ids.map((id) => state.byId.get(id).properties).sort((a, b) => (a.start_date < b.start_date ? 1 : -1));
-    openPopup(lngLat, `<div class="pp"><h3>${items.length} floods hit this same area</h3>
-      <div class="dt">Pick one to see the details</div>
+    openPopup(lngLat, `<div class="pp"><h3>${items.length} major floods hit this same area</h3>
+      <div class="dt">They are drawn on the same spot. Pick one:</div>
       ${items.map((p) => `<button class="btn" data-act="event" data-arg="${esc(p.id)}">${esc(fmtDate(p.start_date))}${p.fatalities ? ' · ' + plural(p.fatalities, 'death') : ''}</button>`).join('')}</div>`);
   }
 
-  function popupExtent(p, lngLat) {
+  function popupExtent(p) {
     const a = state.ems.find((x) => x.code === p.ems_code);
     const evs = a ? relatedEvents(a) : [];
-    openPopup(lngLat, `<div class="pp">
-      <h3>Land under water, seen by satellite</h3>
+    openPopup(null, `<div class="pp">
+      <h3>${String(p.ems_code).startsWith('EMSN') ? 'Still under water weeks later' : 'Land under water, seen by satellite'}</h3>
       <div class="dt">${a ? esc(emsTitle(a)) : ''}</div>
       <table>
         ${p.obs_date ? `<tr><td>Satellite image taken</td><td>${esc(fmtDate(p.obs_date))}</td></tr>` : ''}
         ${p.product ? `<tr><td>Map type</td><td>${esc(PRODUCT_LABEL[p.product] || p.product)}</td></tr>` : ''}
         ${a && a.area_km2 != null ? `<tr><td>Total flooded land mapped</td><td>${nf.format(Math.round(a.area_km2 * 10) / 10)} km²</td></tr>` : ''}
       </table>
-      ${evs.map((e) => `<button class="btn" data-act="event" data-arg="${esc(e.id)}">Flood record: deaths and damage</button>`).join('')}
+      ${evs.map((e) => `<button class="btn" data-act="event" data-arg="${esc(e.id)}">See deaths and damage</button>`).join('')}
       ${a && a.url ? `<a class="btn" href="${esc(a.url)}" target="_blank" rel="noopener">Original maps (Copernicus) ↗</a>` : ''}
     </div>`);
   }
@@ -761,30 +964,30 @@
     const one = (p) => `
       <table>
         <tr><td>Date</td><td>${esc(fmtDate(p.date) || 'unknown')}</td></tr>
-        ${(p.impacts || []).length ? `<tr><td>What was hit</td><td>${p.impacts.map(esc).join('<br>')}</td></tr>` : ''}
-        <tr><td>Civil protection</td><td>${p.civil_protection ? 'Called in' : 'Not called in'}</td></tr>
+        ${(p.impacts || []).length ? `<tr><td>Damage</td><td>${p.impacts.map(esc).join('<br>')}</td></tr>` : ''}
+        <tr><td>Emergency services</td><td>${p.civil_protection ? 'Called out' : 'Not called out'}</td></tr>
         <tr><td>River basin</td><td>${esc(p.basin || '')}</td></tr>
       </table>`;
     const p0 = items[0];
     const title = `${esc(p0.place)}${p0.place_en && p0.place_en !== p0.place ? ` <span class="muted">(${esc(p0.place_en)})</span>` : ''}`;
     openPopup(lngLat, `<div class="pp">
       <h3>${title}</h3>
-      <div class="dt">${items.length > 1 ? `${items.length} local flood reports here` : 'Local flood report'}</div>
+      <div class="dt">${items.length > 1 ? `${items.length} village flood reports here` : 'Village flood report'} · Ministry records, 2012–2018</div>
       ${items.slice(0, 4).map(one).join('<hr>')}
       ${items.length > 4 ? `<div class="notes muted">and ${items.length - 4} more reports</div>` : ''}
-      <div class="src">Source: Greek Ministry of Environment &amp; Energy, flood records collected for the national flood-risk plans (2012–2018)</div>
+      <div class="src">Source: Greek Ministry of Environment &amp; Energy, records for the national flood-risk plans</div>
     </div>`);
   }
 
-  function popupRegion(id, lngLat) {
-    const r = state.regions.features.find((f) => f.properties.region_id === id); if (!r) return;
+  function popupRegion(id) {
+    const r = state.regions?.features.find((f) => f.properties.region_id === id); if (!r) return;
     const evs = state.filtered.filter((f) => (f.properties.region_ids || []).includes(id))
       .map((f) => f.properties).sort((a, b) => (a.start_date < b.start_date ? 1 : -1));
     const fatal = evs.reduce((s, p) => s + (p.fatalities || 0), 0);
     const filtered = state.filtered.length !== state.events.length;
-    openPopup(lngLat, `<div class="pp">
+    openPopup(null, `<div class="pp">
       <h3>${esc(r.properties.name)}</h3>
-      <div class="dt">${evs.length ? `${plural(evs.length, 'major flood')}, ${plural(fatal, 'death')}` : 'No major floods recorded'}${filtered ? ' (with your filters)' : ''}</div>
+      <div class="dt">${evs.length ? `${plural(evs.length, 'major flood')}, ${plural(fatal, 'death')}` : 'No major floods recorded'}${filtered ? ' (with current filters)' : ''}</div>
       ${evs.slice(0, 12).map((p) => `<button class="btn" data-act="event" data-arg="${esc(p.id)}">${esc(fmtDate(p.start_date))}${p.fatalities ? ' · ' + plural(p.fatalities, 'death') : ''}</button>`).join('')}
       ${evs.length > 12 ? `<div class="notes muted">and ${evs.length - 12} more in the list</div>` : ''}
     </div>`);
@@ -802,7 +1005,6 @@
         if (gen !== emsGen) return;
         state.emsLoaded.set(code, g.features.map((f) => ({ ...f, properties: { ...f.properties, ems_code: code } })));
         refreshExtents();
-        $('#l-ems').checked = true; // the switch shows that satellite areas are on the map; unticking clears them
       } catch (err) { toast(`Could not load ${code}`); return; }
     }
     renderLegend();
@@ -838,8 +1040,14 @@
       const [y0, y1] = state.years;
       return Math.min(y1, Math.max(y0, Math.round(y0 + (x / r.width) * (y1 - y0 + 1) - 0.5)));
     };
-    svg.addEventListener('pointerdown', (e) => { drag = yearAt(e); svg.setPointerCapture(e.pointerId); setYears(drag, drag); });
-    svg.addEventListener('pointermove', (e) => { if (drag == null) return; const y = yearAt(e); setYears(Math.min(drag, y), Math.max(drag, y)); });
+    let x0 = 0, moved = false;
+    svg.addEventListener('pointerdown', (e) => { drag = yearAt(e); x0 = e.clientX; moved = false; try { svg.setPointerCapture(e.pointerId); } catch {} });
+    svg.addEventListener('pointermove', (e) => {
+      if (drag == null) return;
+      if (!moved && Math.abs(e.clientX - x0) < 6) return; // a tap or a shaky finger doesn't filter to one year
+      moved = true;
+      const y = yearAt(e); setYears(Math.min(drag, y), Math.max(drag, y));
+    });
     svg.addEventListener('pointerup', () => { drag = null; });
     svg.addEventListener('dblclick', () => setYears(...state.years));
     new ResizeObserver(drawTimeline).observe(svg);
@@ -860,7 +1068,7 @@
       if (!c) return;
       const h = Math.max(2, (c / max) * (H - AX - 4)), y = y0 + i;
       const on = y >= state.f.ymin && y <= state.f.ymax;
-      s += `<rect class="bar${on ? ' on' : ''}" x="${i * bw + 0.5}" y="${H - AX - h}" width="${Math.max(1, bw - 1)}" height="${h}"><title>${y}: ${c} event${c > 1 ? 's' : ''}</title></rect>`;
+      s += `<rect class="bar${on ? ' on' : ''}" x="${i * bw + 0.5}" y="${H - AX - h}" width="${Math.max(1, bw - 1)}" height="${h}"><title>${y}: ${c} major flood${c > 1 ? 's' : ''}</title></rect>`;
     });
     const step = n > 100 ? 20 : n > 40 ? 10 : 5;
     for (let y = Math.ceil(y0 / step) * step; y <= y1; y += step) {
@@ -871,18 +1079,33 @@
 
   // ---------- legend ----------
   function renderLegend() {
-    const label = state.choro === 'fatal' ? 'Deaths in each area' : 'Floods in each area';
+    const label = state.choro === 'fatal' ? 'Deaths in each area' : 'Major floods in each area';
     const max = state.choroMax || 1;
     const showLocal = state.local.length && $('#l-local').checked && !state.f.fatal;
-    const showWater = state.emsLoaded.size > 0;
+    const codes = [...state.emsLoaded.keys()];
+    const first = codes.some((c) => !/^EMSN/.test(c)), later = codes.some((c) => /^EMSN/.test(c));
     $('#legend').innerHTML = `
       <div class="lg-row"><span class="sw" style="background:${FLOOD_COLOR}"></span><b>Major flood</b></div>
-      <div class="lg-row muted" style="margin-left:18px">${state.is3d ? 'taller (or bigger, zoomed in)' : 'bigger'} = more deaths</div>
-      ${showLocal ? `<div class="lg-row"><span class="sw" style="background:${LOCAL_COLOR};width:7px;height:7px;margin:0 2.5px"></span>Local flood report <span class="muted">(zoom in)</span></div>` : ''}
-      ${showWater ? `<div class="lg-row"><span class="sw sq" style="background:${EMS_COLOR}"></span>Land under water, seen by satellite</div>` : ''}
+      <div class="lg-row muted lg-indent">${state.is3d ? 'taller column (or bigger circle) = more deaths' : 'bigger circle = more deaths'}</div>
+      <div class="lg-row muted lg-indent">drawn in the middle of the area it hit</div>
+      ${showLocal ? `<div class="lg-row"><span class="sw" style="background:${LOCAL_COLOR};width:8px;height:8px;margin:0 2px"></span><span>Village flood report, 2012–2018 <span class="muted">(zoom in)</span></span></div>` : ''}
+      ${first ? `<div class="lg-row"><span class="sw sq" style="background:${EMS_COLOR}"></span>Under water, seen by satellite</div>` : ''}
+      ${later ? `<div class="lg-row"><span class="sw sq" style="background:${EMS_LATER_COLOR}"></span>Still under water weeks later</div>` : ''}
       ${state.regions && $('#l-regions').checked ? `<div class="lg-title">${label}</div>
         <div class="ramp" style="background:linear-gradient(90deg,${RAMP.join(',')})"></div>
         <div class="ramp-l"><span>few</span><span>${nf.format(max)}</span></div>` : ''}`;
+  }
+
+
+  // ---------- home view ----------
+  const GREECE = [[19.3, 34.7], [28.4, 41.8]]; // mainland, islands and Crete
+  function goHome({ animate = true } = {}) {
+    closePopup();
+    // fit flat first, then tilt: fitting a tilted view zooms out far more than needed
+    const cam = map.cameraForBounds(GREECE, { padding: mapPadding() });
+    if (!cam) return;
+    const view = { center: cam.center, zoom: cam.zoom + (state.is3d ? 0.3 : 0), pitch: state.is3d ? 50 : 0, bearing: state.is3d ? -12 : 0 };
+    animate ? map.easeTo({ ...view, duration: 900 }) : map.jumpTo(view);
   }
 
   // ---------- floating panels ----------
@@ -892,10 +1115,10 @@
     const d = $('#drawer');
     if (on === !d.hidden) return;
     if (on && isPhone()) { openLayers(false); closePopup(); } // one bottom sheet at a time on phones
-    if (on) openers.drawer = document.activeElement;
+    if (on) { openers.drawer = document.activeElement; orbit.stop(); }
     d.hidden = !on;
     $('#btn-list').setAttribute('aria-expanded', String(on));
-    $('#btn-list').textContent = on ? '✕ Hide list' : '☰ List of floods';
+    $('#btn-list').textContent = on ? '✕ Hide list' : '☰ All floods';
     // move keyboard focus in, and back to where it came from — but never steal it from the search box
     if (on && document.activeElement !== $('#f-search')) $('#sort').focus();
     if (!on && d.contains(document.activeElement)) openers.drawer?.focus?.();
@@ -903,7 +1126,7 @@
   function openLayers(on) {
     const l = $('#layers');
     if (on === !l.hidden) return;
-    if (on) { if (isPhone()) openDrawer(false); closePopup(); openers.layers = document.activeElement; }
+    if (on) { if (isPhone()) openDrawer(false); closePopup(); openers.layers = document.activeElement; orbit.stop(); }
     l.hidden = !on;
     layersCtl._btn?.setAttribute('aria-expanded', String(on));
     if (on) l.querySelector('input:checked, input')?.focus();
@@ -911,12 +1134,18 @@
   }
   // keep zoomed-to features clear of the floating cards
   function mapPadding() {
-    const info = !$('#info').hidden;
-    if (isPhone()) return { top: 150, bottom: info ? Math.round(innerHeight * 0.5) : 170, left: 30, right: 30 };
-    return { top: 60, bottom: 200, left: 330, right: info ? 400 : 80 };
+    const rect = (sel) => { const el = $(sel); return el && !el.hidden ? el.getBoundingClientRect() : null; };
+    const top = rect('#topcard'), tl = rect('#timeline'), info = rect('#info');
+    const bottomGap = innerHeight - Math.min(tl ? tl.top : innerHeight, info && isPhone() ? info.top : innerHeight);
+    if (isPhone()) return { top: (top ? top.bottom : 0) + 10, bottom: bottomGap + 10, left: 20, right: 20 };
+    return { top: 40, bottom: bottomGap + 20, left: (top ? top.right : 0) + 20, right: info ? innerWidth - info.left + 20 : 70 };
   }
 
   // ---------- helpers ----------
+  function pointCoords(f) {
+    const id = f.properties.id;
+    return (state.byId.get(id) || localById.get(id))?.geometry.coordinates;
+  }
   function fc(features) { return { type: 'FeatureCollection', features }; }
   function visible(id) { return map.getLayer(id) && map.getLayoutProperty(id, 'visibility') !== 'none'; }
   function countType(t) { return state.events.filter((f) => f.properties.type === t).length; }
