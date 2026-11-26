@@ -616,6 +616,10 @@
     $('#drawer-close').addEventListener('click', () => openDrawer(false));
     $('#layers-close').addEventListener('click', () => openLayers(false));
     $('#btn-about').addEventListener('click', () => $('#about').showModal());
+    $('#btn-disclaimer').addEventListener('click', () => {
+      $('#about').showModal();
+      $('#about-disclaimer').scrollIntoView({ block: 'start' });
+    });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#about').open) { closePopup(); openDrawer(false); openLayers(false); } });
     if (matchMedia('(max-width: 700px)').matches) $('#legend-box').open = false;
 
