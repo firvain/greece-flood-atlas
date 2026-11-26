@@ -158,6 +158,7 @@
     attributionControl: {
       compact: true,
       customAttribution: [
+        'Not an official flood warning service, data as is (see About)',
         'Floods: <a href="https://doi.org/10.5281/zenodo.23670886" target="_blank" rel="noopener">HANZE</a> (Paprotny, CC BY 4.0)',
         'Satellite flood maps © European Union, <a href="https://emergency.copernicus.eu/" target="_blank" rel="noopener">Copernicus EMS</a>',
         'Local reports &amp; flood zones: <a href="https://floods.ypeka.gr/" target="_blank" rel="noopener">Greek Ministry of Environment &amp; Energy</a>',
