@@ -599,6 +599,7 @@
     if (themeInput) themeInput.checked = true;
     document.querySelectorAll('input[name="theme"]').forEach((r) => r.addEventListener('change', (e) => {
       try { e.target.value === 'auto' ? localStorage.removeItem('gfa-theme') : localStorage.setItem('gfa-theme', e.target.value); } catch {}
+      try { sessionStorage.setItem('gfa-skip-about', '1'); } catch {} // a theme reload is not a new visit
       location.reload();
     }));
     // place-name language
@@ -615,10 +616,19 @@
     $('#btn-list').addEventListener('click', () => openDrawer($('#drawer').hidden));
     $('#drawer-close').addEventListener('click', () => openDrawer(false));
     $('#layers-close').addEventListener('click', () => openLayers(false));
-    $('#btn-about').addEventListener('click', () => $('#about').showModal());
-    $('#btn-disclaimer').addEventListener('click', () => {
-      $('#about').showModal();
-      $('#about-disclaimer').scrollIntoView({ block: 'start' });
+    // the disclaimer is the first thing in About, so both buttons open it at the top
+    const openAbout = () => { $('#about').showModal(); $('#about').scrollTop = 0; $('#about').focus(); };
+    $('#btn-about').addEventListener('click', openAbout);
+    $('#btn-disclaimer').addEventListener('click', openAbout);
+    // open About on every visit so visitors see what the map is and the disclaimer
+    let skipAbout = false;
+    try { skipAbout = !!sessionStorage.getItem('gfa-skip-about'); sessionStorage.removeItem('gfa-skip-about'); } catch {}
+    if (!skipAbout) openAbout(); // focuses the dialog itself, not its first link
+    // click on the dimmed backdrop closes About (clicks inside the box land on its children or padding)
+    $('#about').addEventListener('click', (e) => {
+      if (e.target !== e.currentTarget) return;
+      const r = e.currentTarget.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) e.currentTarget.close();
     });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#about').open) { closePopup(); openDrawer(false); openLayers(false); } });
     if (matchMedia('(max-width: 700px)').matches) $('#legend-box').open = false;

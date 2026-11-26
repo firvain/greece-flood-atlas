@@ -123,8 +123,19 @@
   <div id="toast" hidden></div>
   <div id="tip" hidden role="tooltip"></div>
 
-  <dialog id="about">
-    <h2>About this map</h2>
+  <dialog id="about" tabindex="-1" aria-labelledby="about-disclaimer">
+    <section class="disclaimer">
+    <h2 id="about-disclaimer">Disclaimer</h2>
+    <p>This is an independent map for information and education. It is not an official product of the Greek government,
+      the European Union or any data provider, and it is not a flood warning service. In an emergency, follow Civil Protection
+      instructions and call 112.</p>
+    <p>Do not use it for property, insurance, planning or safety decisions. Check the official flood maps at
+      <a href="https://floods.ypeka.gr/" target="_blank" rel="noopener">floods.ypeka.gr</a>.</p>
+    <p>The data is provided "as is", without any warranty of accuracy or completeness. It has been processed and simplified
+      from the original sources listed below, and the official map layers are loaded live from third-party services that may
+      change or go offline. The authors accept no liability for any use of this map.</p>
+    </section>
+    <h2 class="about-title">About this map</h2>
     <p>Floods are Greece's deadliest weather hazard. This map shows where they struck, who they killed and what they cost.</p>
     <p><b>Major floods (1887–2025)</b> come from the
       <a href="https://zenodo.org/records/17226475/latest" target="_blank" rel="noopener">HANZE database</a> of European floods (Paprotny et al.).
@@ -149,15 +160,6 @@
       <li>European flood models: Copernicus EMS EFAS / GloFAS (JRC).</li>
       <li>Base map: © OpenStreetMap contributors, OpenMapTiles, OpenFreeMap. Satellite photo: Esri, Maxar, Earthstar Geographics. Terrain: Mapzen / AWS Terrain Tiles.</li>
     </ul>
-    <h3 id="about-disclaimer">Disclaimer</h3>
-    <p>This is an independent map for information and education. It is not an official product of the Greek government,
-      the European Union or any data provider, and it is not a flood warning service. In an emergency, follow Civil Protection
-      instructions and call 112.</p>
-    <p>Do not use it for property, insurance, planning or safety decisions. Check the official flood maps at
-      <a href="https://floods.ypeka.gr/" target="_blank" rel="noopener">floods.ypeka.gr</a>.</p>
-    <p>The data is provided "as is", without any warranty of accuracy or completeness. It has been processed and simplified
-      from the original sources listed above, and the official map layers are loaded live from third-party services that may
-      change or go offline. The authors accept no liability for any use of this map.</p>
     <p class="muted">Tips: drag the timeline to pick years. In 3D, right-click and drag (or use two fingers) to tilt and turn the map; ⟳ rotates it slowly.</p>
     <form method="dialog"><button class="wide-btn">Close</button></form>
   </dialog>
